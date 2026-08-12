@@ -86,9 +86,3 @@ As fotos ficariam armazenadas em um serviço próprio para arquivos, em vez de s
 ## Como rodar
 
 ### Back-end
-
-Entrar na pasta:
-
-cd backend
-npm install
-npm run dev
