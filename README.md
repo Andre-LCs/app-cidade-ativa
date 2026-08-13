@@ -1,10 +1,10 @@
-# Cidade Ativa
+## Cidade Ativa
 
 Aplicativo de denúncia e mapeamento de problemas urbanos, como buracos, iluminação, lixo, mato alto, entre outros.
 
-A ideia inicial é ter um mapa onde qualquer pessoa possa registrar problemas da cidade, colocando uma foto e a localização do problema.
+A ideia inicial é permitir que qualquer pessoa registre problemas da cidade por meio de uma foto e da localização do ocorrido.
 
-Esses registros vão aparecendo no mapa e acabam criando uma visão mais clara do que está acontecendo na cidade, sem depender só da prefeitura ou de uma reclamação isolada.
+Esses registros poderão aparecer em um mapa, criando uma visão mais clara dos problemas urbanos e permitindo que outras pessoas acompanhem e apoiem as ocorrências.
 
 ## Integrantes
 
@@ -20,69 +20,206 @@ Esses registros vão aparecendo no mapa e acabam criando uma visão mais clara d
 - Thalita Kamille Soares Veras
 - Tuliane Lima Carneiro
 
-## Ideia do projeto
+## Ideia inicial do projeto
 
-O usuário tira uma foto do problema pelo celular e registra a localização.
+O usuário poderá registrar um problema urbano informando uma foto e a localização do ocorrido.
 
-A ideia é que algumas medidas de verificação sejam tomadas. Por exemplo, o usuário precisar estar a uma determinada distância do local para registrar a ocorrência. A imagem também poderá ser validada por outros usuários, para verificar se realmente representa um problema urbano.
+As ocorrências poderão ser exibidas em um mapa público para que outros usuários consigam visualizar os problemas existentes em determinada região.
 
-Outros usuários poderão confirmar se o problema ainda existe e também informar caso ele tenha sido resolvido.
+Também está prevista a possibilidade de acompanhar o andamento das ocorrências por meio de diferentes status, como:
 
-Também será necessário pensar em uma forma de identificar com uma ferramenta ou algoritmo para identificar quando dois ou mais usuários postarem o mesmo problema, evitando que o mapa fique cheio de registros duplicados da mesma ocorrência, já que por geolocalização não seria muito preciso onde foi tirado a foto.
+- Enviado;
+- Em análise;
+- Resolvido.
 
-e Para alguns casos, principalmente problemas relacionados ao trânsito, deverão existir limites de tempo. Por exemplo, um carro em calçada, em local proibido ou frente a garagem pode ser um problema naquele momento, mas depois o carro pode sair. Nesses casos, o alerta teria uma validade relativamente curta.
+Outros usuários poderão apoiar ou interagir com as ocorrências, aumentando sua visibilidade.
 
-## Funcionalidades pensadas
+## Funcionalidades inicialmente previstas
 
-- Ver o problema diretamente no mapa;
+- Cadastro e login de usuários;
 - Registrar um problema com foto;
-- Usar a localização do celular para marcar o local exato;
-- Confirmar se o problema ainda existe;
-- Informar se o problema foi resolvido;
-- Validar a ocorrência de outros usuários;
-- Identificar possíveis registros duplicados;
-- Acompanhar o andamento da resolução;
+- Utilizar a localização do celular para marcar o local;
+- Acompanhar o andamento das ocorrências;
+- Apoiar ou validar ocorrências registradas por outros usuários;
+- Informar se determinado problema ainda existe ou foi resolvido.
+- Visualizar os problemas em um mapa;
+- Armazenamento externo de imagens;
+
+## Possibilidades em discussão
+
+Além das funcionalidades iniciais, algumas ideias estão sendo avaliadas para versões futuras do projeto:
+
+- Identificação de possíveis ocorrências duplicadas;
+- Diferenciação entre problemas permanentes e temporários;
+- Sistema de prioridade baseado nas confirmações dos usuários;
+- Histórico das ocorrências;
 - Ter usuários da população e usuários de prefeituras;
+- Gamificação por meio de pontos ou XP;
 - Futuramente utilizar o gov.br para autenticação;
-- Possibilidade de gamificação, dando XP ou pontos para quem mais identifica problemas e ajuda a atualizar as ocorrências.
 
-A ideia também é que o sistema só gere um alerta para a prefeitura depois que a ocorrência atingir uma determinada quantidade de validações dos usuários.
+Essas funcionalidades ainda estão em discussão e poderão ser alteradas conforme o desenvolvimento do projeto e as decisões do grupo.
 
-## Arquitetura proposta
+## Arquitetura
 
-### Front-end
-
-**React Native**
-
-Será utilizado para o aplicativo mobile, permitindo utilizar uma base de código para Android e iOS.
-
-Ficará responsável pelas telas do aplicativo, câmera, GPS, mapa, cadastro, login e demais interações com o usuário.
+A arquitetura e as tecnologias do projeto ainda estão sendo definidas.
 
 ### Back-end
 
-**Node.js + Express**
+Foi criada uma estrutura inicial utilizando:
+
+- Node.js;
+- Express;
 
 Será responsável pela API REST e pelas regras do sistema.
 
-Entre as funções previstas estão o cadastro e login dos usuários, validação das ocorrências, verificação da localização, identificação de possíveis problemas duplicados, controle do sistema de XP e definição de quando uma ocorrência deve gerar um alerta para a prefeitura.
+- PostgreSQL.
+
+Entre as funções previstas estão o cadastro e login dos usuários, validação das ocorrências, verificação da localização, detectar ocorrências duplicadas, controle do sistema de XP e definição de quando uma ocorrência deve gerar um alerta para a prefeitura.
+
+A estrutura inicial do back-end já possui uma API básica e uma rota de verificação:
+
+```
+GET /health
+```
 
 ### Banco de dados
 
-**PostgreSQL + PostGIS**
+Foi criado um banco PostgreSQL para o projeto, hospedado no Neon.
 
-A ideia é utilizar PostgreSQL com PostGIS para trabalhar com os dados geográficos.
+A estrutura inicial possui a tabela `usuarios`, contendo:
+
+- `id`: identificador do usuário;
+- `nome`: nome do usuário;
+- `email`: endereço de e-mail;
+- `senha_hash`: senha armazenada de forma protegida;
+- `criado_em`: data e hora de criação do cadastro.
+
+O esquema inicial está disponível em:
+
+```
+backend/db/schema.sql
+```
+
+Funcionalidades relacionadas a dados geográficos e outras tecnologias de banco ainda serão definidas conforme as necessidades do projeto.
+
+Uma das ideias é utilizar PostgreSQL com PostGIS para trabalhar com os dados geográficos.
 
 Isso facilita consultas como verificar se existe algum registro de um problema dentro de determinado raio, o que também poderá ajudar na identificação de ocorrências duplicadas.
 
-### Serviços externos
+### Front-end
 
-- **Google Maps API:** mapa e geocodificação;
-- **gov.br:** autenticação dos usuários;
-- **Firebase:** notificações;
-- **S3 ou serviço equivalente:** armazenamento das imagens.
+A tecnologia do aplicativo mobile ainda está sendo avaliada.
 
-As fotos ficariam armazenadas em um serviço próprio para arquivos, em vez de serem armazenadas diretamente no banco de dados.
+Uma das opções consideradas é o React Native, mas a decisão final será feita pelo grupo.
 
-## Como rodar
+### Mapas e serviços externos
 
-### Back-end
+A solução de mapas e os demais serviços externos ainda estão em avaliação.
+
+Entre as possibilidades estão soluções baseadas em:
+
+- Google Maps api;
+- Leaflet + OpenStreetMap;
+- S3 como serviço de armazenamento externo de imagens ;
+- Firebase notificações;
+- **gov.br** autenticação. dos usuários.
+
+## Estrutura atual do projeto
+
+A estrutura inicial está organizada da seguinte forma:
+
+```
+app-cidade-ativa/
+├── .gitignore
+├── README.md
+├── backend/
+│   ├── db/
+│   │   └── schema.sql
+│   ├── index.js
+│   ├── package.json
+│   └── package-lock.json
+└── frontend/
+```
+
+A pasta `frontend` ainda está vazia e será utilizada durante o desenvolvimento do aplicativo mobile.
+
+## Como rodar o back-end
+
+### Pré-requisitos
+
+- Node.js instalado;
+- acesso ao banco PostgreSQL do projeto.
+
+### 1. Clonar o projeto
+
+```
+git clone https://github.com/Andre-LCs/app-cidade-ativa.git
+cd app-cidade-ativa
+```
+
+### 2. Instalar as dependências
+
+Entre na pasta do back-end:
+
+```
+cd backend
+```
+
+Depois:
+
+```
+npm install
+```
+
+### 3. Configurar as variáveis de ambiente
+
+Crie um arquivo `.env` dentro da pasta `backend`:
+
+```
+DATABASE_URL=CONNECTION_STRING_DO_NEON
+PORT=3000
+```
+
+A `DATABASE_URL` contém as informações de acesso ao banco e **não deve ser publicada no GitHub**.
+
+O arquivo `.env` já está incluído no `.gitignore`.
+
+### 4. Executar o back-end
+
+```
+node index.js
+```
+
+Se estiver tudo correto, será exibido:
+
+```
+Servidor rodando na porta 3000
+```
+
+Depois acesse:
+
+```
+http://localhost:3000/health
+```
+
+O resultado esperado é:
+
+```
+{
+  "status":"ok"
+}
+```
+
+## Próximo objetivo
+
+A primeira etapa de desenvolvimento será implementar o fluxo básico de usuários:
+
+```
+Cadastro
+   ↓
+Login
+   ↓
+Usuário autenticado
+```
+
+---
