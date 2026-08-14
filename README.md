@@ -37,31 +37,47 @@ Outros usuários poderão apoiar ou interagir com as ocorrências, aumentando su
 ## Funcionalidades inicialmente previstas
 
 - Cadastro e login de usuários;
-- Registrar um problema com foto;
-- Utilizar a localização do celular para marcar o local;
-- Acompanhar o andamento das ocorrências;
+- Registro de problemas urbanos;
+- Utilizar a localização do celular;
+- Registro de fotos das ocorrências;
+- Visualização das ocorrências em um mapa;
+- Acompanhamento do status das ocorrências;
 - Apoiar ou validar ocorrências registradas por outros usuários;
 - Informar se determinado problema ainda existe ou foi resolvido.
-- Visualizar os problemas em um mapa;
 - Armazenamento externo de imagens;
 
-## Possibilidades em discussão
+## Possibilidades
 
 Além das funcionalidades iniciais, algumas ideias estão sendo avaliadas para versões futuras do projeto:
 
 - Identificação de possíveis ocorrências duplicadas;
 - Diferenciação entre problemas permanentes e temporários;
-- Sistema de prioridade baseado nas confirmações dos usuários;
-- Histórico das ocorrências;
-- Ter usuários da população e usuários de prefeituras;
+- Sistema de prioridade baseado em confirmações, gravidade e tempo sem solução;
+- Histórico das alterações das ocorrências;
+- Usuários da população e usuários de prefeituras;
 - Gamificação por meio de pontos ou XP;
-- Futuramente utilizar o gov.br para autenticação;
+- Autenticação por meio do gov.br;
+- Painel para acompanhamento de ocorrências por órgãos públicos.
 
-Essas funcionalidades ainda estão em discussão e poderão ser alteradas conforme o desenvolvimento do projeto e as decisões do grupo.
 
 ## Arquitetura
 
-A arquitetura e as tecnologias do projeto ainda estão sendo definidas.
+A arquitetura inicial está sendo estruturada utilizando uma aplicação mobile, uma API de back-end e um banco de dados PostgreSQL.
+
+Front-end
+
+A aplicação mobile será desenvolvida utilizando React Native.
+
+O front-end ficará responsável pelas telas e interações com o usuário, incluindo:
+
+Cadastro;
+Login;
+Mapa;
+Registro de ocorrências;
+Câmera;
+Localização;
+Visualização das ocorrências;
+Acompanhamento dos problemas.
 
 ### Back-end
 
@@ -72,9 +88,7 @@ Foi criada uma estrutura inicial utilizando:
 
 Será responsável pela API REST e pelas regras do sistema.
 
-- PostgreSQL.
-
-Entre as funções previstas estão o cadastro e login dos usuários, validação das ocorrências, verificação da localização, detectar ocorrências duplicadas, controle do sistema de XP e definição de quando uma ocorrência deve gerar um alerta para a prefeitura.
+Entre as funções previstas estão o cadastro e login dos usuários, validação das ocorrências, verificação da localização, detectar ocorrências duplicadas, controle do sistema de XP e definição de quando uma ocorrência deve gerar um alerta para o orgão público.
 
 A estrutura inicial do back-end já possui uma API básica e uma rota de verificação:
 
@@ -100,17 +114,21 @@ O esquema inicial está disponível em:
 backend/db/schema.sql
 ```
 
+A estrutura planejada para o sistema de ocorrências inclui:
+
+usuarios
+categorias
+ocorrencias
+imagens
+validacoes_ocorrencia
+historico_ocorrencia
+
 Funcionalidades relacionadas a dados geográficos e outras tecnologias de banco ainda serão definidas conforme as necessidades do projeto.
 
 Uma das ideias é utilizar PostgreSQL com PostGIS para trabalhar com os dados geográficos.
 
 Isso facilita consultas como verificar se existe algum registro de um problema dentro de determinado raio, o que também poderá ajudar na identificação de ocorrências duplicadas.
 
-### Front-end
-
-A tecnologia do aplicativo mobile ainda está sendo avaliada.
-
-Uma das opções consideradas é o React Native, mas a decisão final será feita pelo grupo.
 
 ### Mapas e serviços externos
 
@@ -132,10 +150,12 @@ A estrutura inicial está organizada da seguinte forma:
 app-cidade-ativa/
 ├── .gitignore
 ├── README.md
+├── API.md
 ├── backend/
 │   ├── db/
 │   │   └── schema.sql
 │   ├── index.js
+│   ├── auth.js
 │   ├── package.json
 │   └── package-lock.json
 └── frontend/
@@ -178,9 +198,12 @@ Crie um arquivo `.env` dentro da pasta `backend`:
 ```
 DATABASE_URL=CONNECTION_STRING_DO_NEON
 PORT=3000
+JWT_SECRET=SUA_CHAVE_SECRETA
 ```
 
 A `DATABASE_URL` contém as informações de acesso ao banco e **não deve ser publicada no GitHub**.
+
+A `JWT_SECRET` também é uma informação privada e **não deve ser publicada**.
 
 O arquivo `.env` já está incluído no `.gitignore`.
 
@@ -219,7 +242,9 @@ Cadastro
    ↓
 Login
    ↓
+Autenticação
+   ↓
 Usuário autenticado
-```
 
+```
 ---
