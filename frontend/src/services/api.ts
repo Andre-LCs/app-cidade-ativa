@@ -1,0 +1,1 @@
+// Serviço responsável pela comunicação do aplicativo com a API do backend.
