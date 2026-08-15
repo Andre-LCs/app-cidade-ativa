@@ -11,7 +11,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 Aplicativo mobile do projeto **Cidade Ativa**, desenvolvido com React Native, Expo e TypeScript.
 
-O front-end será responsável pela interface do aplicativo e pelas interações com o usuário, incluindo cadastro, login, mapa, registro de ocorrências, localização, imagens e acompanhamento dos problemas urbanos.
+O front-end será responsável pela interface do aplicativo e pelas interações com o usuário, incluindo cadastro, login, perfil, mapa, registro de ocorrências, localização, imagens e acompanhamento dos problemas urbanos.
 
 ## Tecnologias
 
@@ -70,18 +70,14 @@ frontend/
 │   │   ├── _layout.tsx
 │   │   ├── index.tsx
 │   │   ├── login.tsx
-│   │   └── cadastro.tsx
+│   │   ├── cadastro.tsx
+│   │   └── perfil.tsx
 │   │
 │   ├── components/
-│   │   ├── ui/
-│   │   └── auth/
-│   │
 │   ├── services/
 │   │   └── api.ts
 │   │
 │   └── types/
-│       ├── usuario.ts
-│       └── auth.ts
 │
 ├── .gitignore
 ├── app.json
@@ -103,35 +99,16 @@ Atualmente existem:
 - `index.tsx` — tela inicial;
 - `login.tsx` — estrutura inicial da tela de login;
 - `cadastro.tsx` — estrutura inicial da tela de cadastro;
+- `perfil.tsx` — estrutura inicial da tela de edição de perfil;
 - `_layout.tsx` — configuração das rotas do aplicativo.
 
-As telas de login e cadastro ainda possuem apenas uma estrutura inicial e serão implementadas como parte da primeira entrega do front-end.
+As telas de login, cadastro e perfil possuem apenas uma estrutura inicial e serão implementadas durante a primeira entrega.
 
 ### `src/components`
 
 Contém componentes reutilizáveis da interface.
 
-#### `ui`
-
-Componentes genéricos que poderão ser utilizados em diferentes telas, como:
-
-- botões;
-- campos de entrada;
-- mensagens;
-- indicadores de carregamento;
-- outros elementos reutilizáveis.
-
-#### `auth`
-
-Componentes específicos relacionados à autenticação.
-
-Por exemplo:
-
-- formulário de login;
-- formulário de cadastro;
-- componentes relacionados à autenticação.
-
-A separação permite evitar que toda a implementação fique diretamente dentro dos arquivos de tela.
+Novos componentes podem ser criados conforme a necessidade das telas.
 
 ### `src/services`
 
@@ -145,30 +122,31 @@ src/services/api.ts
 
 Esse arquivo possui uma função base para realizar requisições HTTP para a API.
 
-O endereço utilizado atualmente durante o desenvolvimento local é:
+Durante o desenvolvimento local, o endereço utilizado é:
 
 ```
 http://localhost:3000
 ```
 
-O contrato definitivo das rotas de autenticação será definido junto ao desenvolvimento do back-end.
-
 ### `src/types`
 
-Contém tipos e interfaces TypeScript utilizados pelo aplicativo.
+Contém os tipos e interfaces TypeScript utilizados pelo aplicativo.
 
-Foram preparados:
+Novos tipos podem ser adicionados conforme as necessidades do desenvolvimento e o contrato da API.
+
+## Primeira entrega
+
+A primeira entrega consiste em colocar o seguinte fluxo para funcionar:
 
 ```
-usuario.ts
-auth.ts
+Cadastro
+   ↓
+Login
+   ↓
+Editar perfil
+   ↓
+Conferir se os dados foram salvos no banco
 ```
-
-Esses arquivos estão reservados para os tipos relacionados a usuários e autenticação. Os campos definitivos serão definidos de acordo com o contrato da API.
-
-## Primeira entrega do front-end
-
-A primeira entrega prevista é colocar o fluxo básico de autenticação para funcionar.
 
 ### Cadastro
 
@@ -179,8 +157,7 @@ A tela deverá permitir:
 - informar senha;
 - validar os campos;
 - enviar os dados para o back-end;
-- apresentar mensagens de erro ou sucesso;
-- encaminhar o usuário para o fluxo adequado após o cadastro.
+- tratar respostas de erro e sucesso.
 
 ### Login
 
@@ -191,22 +168,18 @@ A tela deverá permitir:
 - validar os campos;
 - enviar os dados para o back-end;
 - tratar respostas de erro;
-- armazenar a autenticação recebida;
-- encaminhar o usuário após o login.
+- receber e armazenar a autenticação.
 
-### Fluxo inicial
+### Editar perfil
 
-```
-Cadastro
-   ↓
-Usuário criado
-   ↓
-Login
-   ↓
-Usuário autenticado
-```
+A tela deverá permitir:
 
-A integração com as rotas e o formato definitivo das respostas será feita conforme o contrato definido pelo back-end.
+- visualizar os dados do usuário;
+- alterar os dados permitidos;
+- enviar as alterações para o back-end;
+- apresentar o resultado da operação.
+
+A integração será feita conforme o contrato definido pelo back-end.
 
 ## Comunicação com o back-end
 
@@ -250,7 +223,7 @@ Resultado esperado:
 
 ### Observação sobre dispositivos físicos
 
-Quando o aplicativo for executado em um celular físico, `localhost` se refere ao próprio celular, e não ao computador que está executando o back-end.
+Quando o aplicativo for executado em um celular físico, `localhost` se refere ao próprio celular, e não ao computador que estiver executando o back-end.
 
 Nesse caso, o endereço da API deverá ser configurado posteriormente para utilizar o endereço de rede da máquina que estiver executando o back-end.
 
@@ -269,7 +242,7 @@ services/
     Comunicação com APIs
 
 types/
-    Tipos e interfaces TypeScript
+    Tipos e interfaces
 ```
 
 Novas estruturas poderão ser adicionadas conforme surgirem necessidades durante o desenvolvimento.
@@ -284,8 +257,9 @@ Também já foram preparados:
 - tela inicial;
 - estrutura inicial de login;
 - estrutura inicial de cadastro;
+- estrutura inicial de edição de perfil;
 - serviço base para comunicação com o back-end;
 - organização inicial de componentes;
 - organização inicial dos tipos.
 
-A próxima etapa é a implementação funcional das telas de **login e cadastro**.
+A próxima etapa é a implementação funcional do fluxo de **cadastro, login e edição de perfil**, conectando o aplicativo à API real do back-end.
