@@ -37,20 +37,20 @@ Outros usuários poderão apoiar ou interagir com as ocorrências, aumentando su
 ## Funcionalidades inicialmente previstas
 
 - Cadastro e login de usuários;
+- Edição de perfil;
 - Registro de problemas urbanos;
 - Utilizar a localização do celular;
 - Registro de fotos das ocorrências;
 - Visualização das ocorrências em um mapa;
 - Acompanhamento do status das ocorrências;
 - Apoiar ou validar ocorrências registradas por outros usuários;
-- Informar se determinado problema ainda existe ou foi resolvido.
+- Identificação de possíveis ocorrências duplicadas;
 - Armazenamento externo de imagens;
 
 ## Possibilidades
 
 Além das funcionalidades iniciais, algumas ideias estão sendo avaliadas para versões futuras do projeto:
 
-- Identificação de possíveis ocorrências duplicadas;
 - Diferenciação entre problemas permanentes e temporários;
 - Sistema de prioridade baseado em confirmações, gravidade e tempo sem solução;
 - Histórico das alterações das ocorrências;
@@ -64,36 +64,61 @@ Além das funcionalidades iniciais, algumas ideias estão sendo avaliadas para v
 
 A arquitetura inicial está sendo estruturada utilizando uma aplicação mobile, uma API de back-end e um banco de dados PostgreSQL.
 
-Front-end
+### Front-end
 
-A aplicação mobile será desenvolvida utilizando React Native.
+Aplicação mobile desenvolvida com:
 
-O front-end ficará responsável pelas telas e interações com o usuário, incluindo:
+- React Native;
+- Expo;
+- Expo Router;
+- TypeScript.
 
-Cadastro;
-Login;
-Mapa;
-Registro de ocorrências;
-Câmera;
-Localização;
-Visualização das ocorrências;
-Acompanhamento dos problemas.
+O front-end é responsável pelas telas, navegação e interação com o usuário.
+
+Entre as funcionalidades previstas estão:
+
+- Cadastro;
+- Login;
+- Edição de perfil;
+- Mapa;
+- Registro de ocorrências;
+- Câmera;
+- Localização;
+- Visualização e acompanhamento das ocorrências.
+
+As instruções específicas do front-end estão em:
+
+```
+frontend/README.md
+```
 
 ### Back-end
 
-Foi criada uma estrutura inicial utilizando:
+API REST responsável pelas regras do sistema e pela comunicação entre o aplicativo e o banco de dados.
+
+Tecnologias utilizadas inicialmente:
 
 - Node.js;
 - Express;
+- PostgreSQL (`pg`);
+- dotenv;
+- CORS;
+- bcrypt;
+- jsonwebtoken.
 
-Será responsável pela API REST e pelas regras do sistema.
+O back-end será responsável por funcionalidades como:
 
-Entre as funções previstas estão o cadastro e login dos usuários, validação das ocorrências, verificação da localização, detectar ocorrências duplicadas, controle do sistema de XP e definição de quando uma ocorrência deve gerar um alerta para o orgão público.
+- Cadastro de usuários;
+- Login e autenticação com JWT;
+- Edição de usuários;
+- Registro e gerenciamento de ocorrências;
+- Validação de dados;
+- Regras relacionadas às ocorrências.
 
-A estrutura inicial do back-end já possui uma API básica e uma rota de verificação:
+As instruções específicas para desenvolvimento do back-end estão em:
 
 ```
-GET /health
+backend/README.md
 ```
 
 ### Banco de dados
@@ -129,6 +154,25 @@ Uma das ideias é utilizar PostgreSQL com PostGIS para trabalhar com os dados ge
 
 Isso facilita consultas como verificar se existe algum registro de um problema dentro de determinado raio, o que também poderá ajudar na identificação de ocorrências duplicadas.
 
+## API
+
+O contrato das principais rotas da aplicação está documentado em:
+
+```
+API.md
+```
+
+Antes de implementar ou consumir uma rota, consulte esse arquivo para verificar:
+
+- método HTTP;
+- endereço da rota;
+- dados enviados;
+- autenticação necessária;
+- formato da resposta;
+- possíveis erros.
+
+A ideia é manter o front-end e o back-end seguindo o mesmo contrato.
+
 
 ### Mapas e serviços externos
 
@@ -142,100 +186,9 @@ Entre as possibilidades estão soluções baseadas em:
 - Firebase notificações;
 - **gov.br** autenticação. dos usuários.
 
-## Estrutura atual do projeto
+## Primeira entrega
 
-A estrutura inicial está organizada da seguinte forma:
-
-```
-app-cidade-ativa/
-├── .gitignore
-├── README.md
-├── API.md
-├── backend/
-│   ├── db/
-│   │   └── schema.sql
-│   ├── index.js
-│   ├── auth.js
-│   ├── package.json
-│   └── package-lock.json
-└── frontend/
-```
-
-A pasta `frontend` ainda está vazia e será utilizada durante o desenvolvimento do aplicativo mobile.
-
-## Como rodar o back-end
-
-### Pré-requisitos
-
-- Node.js instalado;
-- acesso ao banco PostgreSQL do projeto.
-
-### 1. Clonar o projeto
-
-```
-git clone https://github.com/Andre-LCs/app-cidade-ativa.git
-cd app-cidade-ativa
-```
-
-### 2. Instalar as dependências
-
-Entre na pasta do back-end:
-
-```
-cd backend
-```
-
-Depois:
-
-```
-npm install
-```
-
-### 3. Configurar as variáveis de ambiente
-
-Crie um arquivo `.env` dentro da pasta `backend`:
-
-```
-DATABASE_URL=CONNECTION_STRING_DO_NEON
-PORT=3000
-JWT_SECRET=SUA_CHAVE_SECRETA
-```
-
-A `DATABASE_URL` contém as informações de acesso ao banco e **não deve ser publicada no GitHub**.
-
-A `JWT_SECRET` também é uma informação privada e **não deve ser publicada**.
-
-O arquivo `.env` já está incluído no `.gitignore`.
-
-### 4. Executar o back-end
-
-```
-node index.js
-```
-
-Se estiver tudo correto, será exibido:
-
-```
-Servidor rodando na porta 3000
-```
-
-Depois acesse:
-
-```
-http://localhost:3000/health
-```
-
-O resultado esperado é:
-
-```
-{
-  "status":"ok"
-}
-```
-
-## Próximo objetivo
-
-A primeira etapa de desenvolvimento será implementar o fluxo básico de usuários:
+A primeira entrega tem como objetivo colocar o fluxo básico de usuários para funcionar:
 
 ```
 Cadastro
@@ -244,7 +197,61 @@ Login
    ↓
 Autenticação
    ↓
-Usuário autenticado
+Editar perfil
+   ↓
+Conferir se os dados foram salvos no banco
+```
+
+Para isso, as equipes serão divididas entre:
+
+### Front-end
+
+Implementação das telas de:
+
+- Cadastro;
+- Login;
+- Edição de perfil.
+
+As telas deverão se comunicar com a API real do back-end.
+
+### Back-end
+
+Implementação das rotas de:
+
+- Cadastro;
+- Login com JWT;
+- Edição de usuário.
+
+### Banco de dados
+
+Acompanhamento da estrutura da tabela de usuários e verificação das operações realizadas durante o fluxo.
+
+### Documentação e testes
+
+Teste do fluxo completo:
 
 ```
+Cadastrar
+   ↓
+Logar
+   ↓
+Editar
+   ↓
+Verificar no banco
+```
+
+Além da preparação da documentação e apresentação da entrega.
+
+## Estado atual
+
+A estrutura inicial do projeto já está criada.
+
+O back-end possui a estrutura básica da API, conexão com o PostgreSQL e middleware inicial para autenticação com JWT.
+
+O front-end possui a estrutura inicial do aplicativo utilizando Expo, React Native, Expo Router e TypeScript, incluindo as telas iniciais de cadastro, login e edição de perfil.
+
+O banco PostgreSQL já está hospedado no Neon e possui a estrutura inicial da tabela de usuários.
+
+A próxima etapa é implementar e integrar o fluxo de cadastro, login e edição de perfil.
+
 ---
