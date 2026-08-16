@@ -24,14 +24,12 @@ A estrutura inicial do backend já está no GitHub. Quem for trabalhar no backen
 ```
 git clone https://github.com/Andre-LCs/app-cidade-ativa.git
 cd app-cidade-ativa
-
 ```
 
 Entre na pasta do backend:
 
 ```
 cd backend
-
 ```
 
 ### 2. Instalar as dependências
@@ -40,7 +38,6 @@ Na pasta `backend`:
 
 ```
 npm install
-
 ```
 
 Isso instala as dependências definidas no `package.json`.
@@ -51,22 +48,19 @@ Cada pessoa que for executar o backend deve criar seu próprio arquivo:
 
 ```
 backend/.env
-
 ```
 
-O arquivo `.env` **não está no GitHub**
+O arquivo `.env` **não está no GitHub**.
 
 Podem copiar a estrutura de:
 
 ```
-
 backend/.env.example
-
 ```
 
 que serve como modelo.
 
-Copie o `.env.example` para `.env` e preencha as variáveis com os valores fornecidos para o projeto:
+Copie o `.env.example` para `.env` e preencha as variáveis com os valores fornecidos individualmente para o projeto:
 
 ```env
 DATABASE_URL=
@@ -78,7 +72,7 @@ A `DATABASE_URL` contém os dados de acesso ao PostgreSQL do projeto.
 
 O `JWT_SECRET` é utilizado para gerar e validar os tokens JWT.
 
-Não commitar o **.env.**
+Não commitar o `.env`.
 
 ### 4. Banco de dados
 
@@ -226,9 +220,23 @@ O token deverá conter o identificador do usuário para permitir que as rotas pr
 
 ### Edição de perfil
 
-Implementar a rota definida no `API.md` para edição dos dados do usuário.
+Implementar as duas rotas definidas no `API.md` para a tela de edição de perfil:
 
-A rota deverá:
+```
+GET /usuario/me
+PUT /usuario/me
+```
+
+O `GET /usuario/me` deverá:
+
+1. verificar o JWT;
+2. identificar o usuário autenticado;
+3. buscar os dados atuais do usuário no PostgreSQL;
+4. retornar a resposta definida no `API.md`.
+
+Essa rota é o que permite que a tela de edição de perfil abra com os campos Nome e Email já preenchidos com os dados atuais — sem ela, o front-end não tem como saber o que exibir antes do usuário editar.
+
+O `PUT /usuario/me` deverá:
 
 1. verificar o JWT;
 2. identificar o usuário autenticado;
