@@ -263,3 +263,12 @@ Também já foram preparados:
 - organização inicial dos tipos.
 
 A próxima etapa é a implementação funcional do fluxo de **cadastro, login e edição de perfil**, conectando o aplicativo à API real do back-end.
+
+## Design
+ 
+A implementação visual das telas pode seguir os mockups desenvolvidos no Figma.
+
+O arquivo `DESIGN-TOKENS.md` contém as principais cores, tipografia e medidas utilizadas.
+
+Figma:
+[(https://www.figma.com/design/gQVnzJbtrGp8rH1HN0RVRZ/Untitled?node-id=0-1&t=cTD4YmV6RVV8kNsH-1)]
