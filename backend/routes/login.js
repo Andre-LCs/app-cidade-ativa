@@ -63,3 +63,50 @@ router.post('/', async (req, res) => {
 });
 
 module.exports = router;
+
+
+const handleLogin = async () => {
+    // Validação básica antes de enviar
+    if (!email || !password) {
+      Alert.alert('Atenção', 'E-mail e senha são obrigatórios.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+
+      const apiUrl = 'http://localhost:3000/login';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Mudança aqui: mapeando "password" para "senha" como o backend pede
+        body: JSON.stringify({ email: email, senha: password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // HTTP 200 - Login com sucesso!
+        console.log('Token JWT recebido:', data.token);
+        console.log('Dados do usuário:', data.usuario);
+        
+        Alert.alert('Sucesso', `Bem-vindo(a), ${data.usuario.nome}!`);
+        
+        // TODO: Salvar o token no dispositivo e navegar para a Home
+
+      } else {
+        // HTTP 400 ou 401 - Erro tratado pelo backend
+        // Mudança aqui: lendo "data.erro" em vez de "data.message"
+        Alert.alert('Falha no Login', data.erro);
+      }
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      Alert.alert('Erro', 'Não foi possível conectar ao servidor. Verifique sua internet ou se o backend está rodando no IP correto.');
+    } finally {
+      setIsLoading(false);
+    }
+  };

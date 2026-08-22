@@ -5,3 +5,4 @@ CREATE TABLE usuarios (
     senha_hash TEXT NOT NULL,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
