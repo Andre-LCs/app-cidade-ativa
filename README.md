@@ -1,26 +1,26 @@
-## Cidade Ativa
+# Cidade Ativa
 
 Aplicativo de denúncia e mapeamento de problemas urbanos, como buracos, iluminação, lixo, mato alto, entre outros.
 
-A ideia inicial é permitir que qualquer pessoa registre problemas da cidade por meio de uma foto e da localização do ocorrido.
+A ideia é permitir que qualquer pessoa registre problemas da cidade por meio de uma foto e da localização do ocorrido.
 
-Esses registros poderão aparecer em um mapa, criando uma visão mais clara dos problemas urbanos e permitindo que outras pessoas acompanhem e apoiem as ocorrências.
+Esses registros poderão aparecer em um mapa, criando uma visão mais clara dos problemas urbanos e permitindo que outros usuários acompanhem e apoiem as ocorrências.
 
 ## Integrantes
 
-- André Lucas Aquino Carneiro e Silva
-- Felipe Rogério Pereira Soares
-- Gabriely Rocha Nascimento
-- Isabela Alecrim de França
-- Jadson Lopes Fonseca
-- Karla Léa Nascimento Querre
-- Matheus Fernandes Cardoso da Conceição
-- Rafael Ferreira Tassinari
-- Ruan Evangelista Gomes
-- Thalita Kamille Soares Veras
-- Tuliane Lima Carneiro
+* André Lucas Aquino Carneiro e Silva
+* Felipe Rogério Pereira Soares
+* Gabriely Rocha Nascimento
+* Isabela Alecrim de França
+* Jadson Lopes Fonseca
+* Karla Léa Nascimento Querre
+* Matheus Fernandes Cardoso da Conceição
+* Rafael Ferreira Tassinari
+* Ruan Evangelista Gomes
+* Thalita Kamille Soares Veras
+* Tuliane Lima Carneiro
 
-## Ideia inicial do projeto
+## Ideia do projeto
 
 O usuário poderá registrar um problema urbano informando uma foto e a localização do ocorrido.
 
@@ -28,67 +28,77 @@ As ocorrências poderão ser exibidas em um mapa público para que outros usuár
 
 Também está prevista a possibilidade de acompanhar o andamento das ocorrências por meio de diferentes status, como:
 
-- Enviado;
-- Em análise;
-- Resolvido.
+* Enviado;
+* Em análise;
+* Resolvido.
 
 Outros usuários poderão apoiar ou interagir com as ocorrências, aumentando sua visibilidade.
 
-## Funcionalidades inicialmente previstas
+## Funcionalidades previstas
 
-- Cadastro e login de usuários;
-- Edição de perfil;
-- Registro de problemas urbanos;
-- Utilizar a localização do celular;
-- Registro de fotos das ocorrências;
-- Visualização das ocorrências em um mapa;
-- Acompanhamento do status das ocorrências;
-- Apoiar ou validar ocorrências registradas por outros usuários;
-- Identificação de possíveis ocorrências duplicadas;
-- Armazenamento externo de imagens;
+* Cadastro e login de usuários;
+* Edição de perfil;
+* Registro de problemas urbanos;
+* Utilização da localização do celular;
+* Registro de fotos das ocorrências;
+* Visualização das ocorrências em um mapa;
+* Acompanhamento do status das ocorrências;
+* Apoio ou validação de ocorrências registradas por outros usuários;
+* Identificação de possíveis ocorrências duplicadas;
+* Armazenamento externo de imagens.
 
-## Possibilidades
+## Possibilidades futuras
 
 Além das funcionalidades iniciais, algumas ideias estão sendo avaliadas para versões futuras do projeto:
 
-- Diferenciação entre problemas permanentes e temporários;
-- Sistema de prioridade baseado em confirmações, gravidade e tempo sem solução;
-- Histórico das alterações das ocorrências;
-- Usuários da população e usuários de prefeituras;
-- Gamificação por meio de pontos ou XP;
-- Autenticação por meio do gov.br;
-- Painel para acompanhamento de ocorrências por órgãos públicos.
-
+* Diferenciação entre problemas permanentes e temporários;
+* Sistema de prioridade baseado em confirmações, gravidade e tempo sem solução;
+* Histórico das alterações das ocorrências;
+* Usuários da população e usuários de prefeituras;
+* Gamificação por meio de pontos ou XP;
+* Autenticação por meio do gov.br;
+* Painel para acompanhamento de ocorrências por órgãos públicos.
 
 ## Arquitetura
 
-A arquitetura inicial está sendo estruturada utilizando uma aplicação mobile, uma API de back-end e um banco de dados PostgreSQL.
+A arquitetura do projeto é composta por uma aplicação mobile, uma API de back-end e um banco de dados PostgreSQL.
+
+```text
+Aplicativo Mobile
+       ↓
+   API REST
+       ↓
+ PostgreSQL
+       ↓
+     Neon
+```
 
 ### Front-end
 
 Aplicação mobile desenvolvida com:
 
-- React Native;
-- Expo;
-- Expo Router;
-- TypeScript.
+* React Native;
+* Expo;
+* Expo Router;
+* TypeScript;
+* Expo Secure Store.
 
-O front-end é responsável pelas telas, navegação e interação com o usuário.
+O front-end é responsável pelas telas, navegação, interação com o usuário e comunicação com a API.
 
 Entre as funcionalidades previstas estão:
 
-- Cadastro;
-- Login;
-- Edição de perfil;
-- Mapa;
-- Registro de ocorrências;
-- Câmera;
-- Localização;
-- Visualização e acompanhamento das ocorrências.
+* Cadastro;
+* Login;
+* Edição de perfil;
+* Mapa;
+* Registro de ocorrências;
+* Câmera;
+* Localização;
+* Visualização e acompanhamento das ocorrências.
 
 As instruções específicas do front-end estão em:
 
-```
+```text
 frontend/README.md
 ```
 
@@ -96,101 +106,118 @@ frontend/README.md
 
 API REST responsável pelas regras do sistema e pela comunicação entre o aplicativo e o banco de dados.
 
-Tecnologias utilizadas inicialmente:
+Tecnologias utilizadas:
 
-- Node.js;
-- Express;
-- PostgreSQL (`pg`);
-- dotenv;
-- CORS;
-- bcrypt;
-- jsonwebtoken.
+* Node.js;
+* Express;
+* PostgreSQL (`pg`);
+* dotenv;
+* CORS;
+* bcrypt;
+* jsonwebtoken;
+* Docker.
 
-O back-end será responsável por funcionalidades como:
+O back-end é responsável por funcionalidades como:
 
-- Cadastro de usuários;
-- Login e autenticação com JWT;
-- Edição de usuários;
-- Registro e gerenciamento de ocorrências;
-- Validação de dados;
-- Regras relacionadas às ocorrências.
+* Cadastro de usuários;
+* Login e autenticação com JWT;
+* Consulta do usuário autenticado;
+* Edição de usuários;
+* Registro e gerenciamento de ocorrências;
+* Validação de dados;
+* Regras relacionadas às ocorrências.
 
-As instruções específicas para desenvolvimento do back-end estão em:
+O backend pode ser executado diretamente com Node.js ou utilizando Docker Compose.
 
-```
+As instruções específicas estão em:
+
+```text
 backend/README.md
 ```
 
 ### Banco de dados
 
-Foi criado um banco PostgreSQL para o projeto, hospedado no Neon.
+O projeto utiliza PostgreSQL hospedado no Neon.
 
 A estrutura inicial possui a tabela `usuarios`, contendo:
 
-- `id`: identificador do usuário;
-- `nome`: nome do usuário;
-- `email`: endereço de e-mail;
-- `senha_hash`: senha armazenada de forma protegida;
-- `criado_em`: data e hora de criação do cadastro.
+* `id`: identificador do usuário;
+* `nome`: nome do usuário;
+* `email`: endereço de e-mail;
+* `senha_hash`: senha armazenada de forma protegida;
+* `criado_em`: data e hora de criação do cadastro;
+* `atualizado_em`: data e hora da última atualização.
 
-O esquema inicial está disponível em:
+O esquema está disponível em:
 
-```
+```text
 backend/db/schema.sql
 ```
 
 A estrutura planejada para o sistema de ocorrências inclui:
 
+```text
 usuarios
 categorias
 ocorrencias
 imagens
 validacoes_ocorrencia
 historico_ocorrencia
+```
 
 Funcionalidades relacionadas a dados geográficos e outras tecnologias de banco ainda serão definidas conforme as necessidades do projeto.
 
-Uma das ideias é utilizar PostgreSQL com PostGIS para trabalhar com os dados geográficos.
+Uma das possibilidades é utilizar PostgreSQL com PostGIS para trabalhar com dados geográficos.
 
-Isso facilita consultas como verificar se existe algum registro de um problema dentro de determinado raio, o que também poderá ajudar na identificação de ocorrências duplicadas.
+Isso poderá facilitar consultas como verificar se existe algum registro de um problema dentro de determinado raio, auxiliando também na identificação de possíveis ocorrências duplicadas.
 
 ## API
 
 O contrato das principais rotas da aplicação está documentado em:
 
-```
+```text
 API.md
 ```
 
 Antes de implementar ou consumir uma rota, consulte esse arquivo para verificar:
 
-- método HTTP;
-- endereço da rota;
-- dados enviados;
-- autenticação necessária;
-- formato da resposta;
-- possíveis erros.
+* método HTTP;
+* endereço da rota;
+* dados enviados;
+* autenticação necessária;
+* formato da resposta;
+* possíveis erros.
 
 A ideia é manter o front-end e o back-end seguindo o mesmo contrato.
 
+Atualmente, o contrato inclui as rotas:
 
-### Mapas e serviços externos
+```text
+POST /cadastro
+POST /login
+GET /usuario/me
+PUT /usuario/me
+```
+
+## Mapas e serviços externos
 
 A solução de mapas e os demais serviços externos ainda estão em avaliação.
 
-Entre as possibilidades estão soluções baseadas em:
+Entre as possibilidades estão:
 
-- Google Maps api;
-- Leaflet + OpenStreetMap;
-- S3 como serviço de armazenamento externo de imagens ;
-- Firebase notificações;
-- **gov.br** autenticação. dos usuários.
+* Google Maps API;
+* Leaflet + OpenStreetMap;
+* S3 ou serviço equivalente para armazenamento externo de imagens;
+* Firebase para notificações;
+* gov.br para autenticação dos usuários.
+
+Essas tecnologias serão definidas conforme a implementação das funcionalidades correspondentes.
 
 ## Primeira entrega
 
 A primeira entrega tem como objetivo colocar o fluxo básico de usuários para funcionar:
 
-```
+```text
 Cadastro
    ↓
 Login
@@ -202,56 +229,123 @@ Editar perfil
 Conferir se os dados foram salvos no banco
 ```
 
-Para isso, as equipes serão divididas entre:
+### Back-end
+
+As rotas da primeira entrega já foram implementadas:
+
+```text
+POST /cadastro
+POST /login
+GET /usuario/me
+PUT /usuario/me
+```
+
+O back-end utiliza bcrypt para armazenamento seguro das senhas e JWT para autenticação das rotas protegidas.
+
+As rotas foram testadas utilizando o PostgreSQL hospedado no Neon.
+
+O backend também possui configuração para execução através do Docker Compose.
 
 ### Front-end
 
-Implementação das telas de:
+A tela de login já foi implementada e integrada ao back-end.
 
-- Cadastro;
-- Login;
-- Edição de perfil.
+O fluxo atual inclui:
 
-As telas deverão se comunicar com a API real do back-end.
+```text
+Tela de Login
+      ↓
+Validação dos campos
+      ↓
+POST /login
+      ↓
+JWT recebido
+      ↓
+Token armazenado com Secure Store
+```
 
-### Back-end
+A tela também possui tratamento de erros e indicador de carregamento durante a autenticação.
 
-Implementação das rotas de:
-
-- Cadastro;
-- Login com JWT;
-- Edição de usuário.
+As telas de cadastro e edição de perfil continuam em desenvolvimento.
 
 ### Banco de dados
 
-Acompanhamento da estrutura da tabela de usuários e verificação das operações realizadas durante o fluxo.
+O banco PostgreSQL já está configurado no Neon.
 
-### Documentação e testes
+A tabela `usuarios` possui os campos necessários para o fluxo atual de autenticação e edição de perfil.
 
-Teste do fluxo completo:
-
-```
-Cadastrar
-   ↓
-Logar
-   ↓
-Editar
-   ↓
-Verificar no banco
-```
-
-Além da preparação da documentação e apresentação da entrega.
+As operações realizadas pela API foram testadas diretamente contra o banco.
 
 ## Estado atual
 
-A estrutura inicial do projeto já está criada.
+O projeto já possui a estrutura inicial do front-end, back-end e banco de dados.
 
-O back-end possui a estrutura básica da API, conexão com o PostgreSQL e middleware inicial para autenticação com JWT.
+### Back-end
 
-O front-end possui a estrutura inicial do aplicativo utilizando Expo, React Native, Expo Router e TypeScript, incluindo as telas iniciais de cadastro, login e edição de perfil.
+O back-end já possui:
 
-O banco PostgreSQL já está hospedado no Neon e possui a estrutura inicial da tabela de usuários.
+* API REST com Express;
+* conexão com PostgreSQL;
+* cadastro de usuários;
+* autenticação com JWT;
+* login;
+* consulta do usuário autenticado;
+* atualização de dados do usuário;
+* armazenamento de senhas utilizando bcrypt;
+* middleware de autenticação;
+* Dockerfile;
+* Docker Compose;
+* `.dockerignore`;
+* conexão com o banco PostgreSQL hospedado no Neon.
 
-A próxima etapa é implementar e integrar o fluxo de cadastro, login e edição de perfil.
+### Front-end
 
----
+O front-end já possui:
+
+* estrutura com Expo e React Native;
+* Expo Router;
+* TypeScript;
+* tela de login;
+* validação dos campos de login;
+* integração com `POST /login`;
+* tratamento de erros de autenticação;
+* armazenamento seguro do JWT;
+* estrutura inicial de cadastro;
+* estrutura inicial de edição de perfil;
+* organização inicial de componentes e serviços.
+
+### Banco de dados
+
+O banco PostgreSQL está hospedado no Neon e possui a tabela `usuarios` configurada para o fluxo atual.
+
+## Próximas etapas
+
+As próximas etapas do desenvolvimento são:
+
+1. Finalizar a tela de cadastro no front-end;
+2. Integrar o cadastro com `POST /cadastro`;
+3. Finalizar a tela de edição de perfil;
+4. Integrar `GET /usuario/me` e `PUT /usuario/me`;
+5. Validar o fluxo completo entre aplicativo, API e banco de dados;
+6. Iniciar a implementação das funcionalidades relacionadas às ocorrências urbanas;
+7. Definir a solução de mapas, localização e armazenamento de imagens.
+
+## Documentação
+
+Os principais documentos do projeto são:
+
+```text
+README.md
+API.md
+frontend/README.md
+backend/README.md
+backend/db/schema.sql
+```
+
+Cada documentação possui uma finalidade específica:
+
+* `README.md` — visão geral do projeto;
+* `API.md` — contrato da API;
+* `frontend/README.md` — configuração e desenvolvimento do aplicativo;
+* `backend/README.md` — configuração e desenvolvimento da API;
+* `backend/db/schema.sql` — estrutura do banco de dados.

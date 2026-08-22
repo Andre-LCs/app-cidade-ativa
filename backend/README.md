@@ -1,8 +1,8 @@
 # Cidade Ativa — Back-end
 
-API responsável pela comunicação entre o aplicativo mobile e o banco de dados do projeto Cidade Ativa.
+API responsável pela comunicação entre o aplicativo mobile e o banco de dados do projeto **Cidade Ativa**.
 
-O back-end utiliza Node.js e Express e será responsável pelas regras do sistema, autenticação dos usuários, gerenciamento das ocorrências e comunicação com o PostgreSQL.
+O back-end utiliza **Node.js** e **Express** e é responsável pelas regras do sistema, autenticação dos usuários, gerenciamento dos dados e comunicação com o PostgreSQL.
 
 ## Tecnologias
 
@@ -14,53 +14,54 @@ O back-end utiliza Node.js e Express e será responsável pelas regras do sistem
 * CORS
 * bcrypt
 * jsonwebtoken
+* Docker
+* Docker Compose
+
+## Banco de dados
+
+O projeto utiliza PostgreSQL hospedado no **Neon**.
+
+Não é necessário configurar um PostgreSQL local para executar o back-end.
+
+A estrutura do banco está registrada em:
+
+```text
+backend/db/schema.sql
+```
+
+A tabela `usuarios` possui atualmente os seguintes campos:
+
+```text
+id
+nome
+email
+senha_hash
+criado_em
+atualizado_em
+```
+
+Alterações na estrutura do banco devem ser registradas no `schema.sql` e aplicadas ao banco do projeto quando necessário.
 
 ## Como configurar o projeto
 
-A estrutura inicial do backend já está no GitHub. Quem for trabalhar no backend não precisa configurar um PostgreSQL local. O projeto usa o PostgreSQL hospedado no Neon, então todos vão trabalhar sobre o mesmo banco.
+### 1. Clonar o repositório
 
-### 1. Clonar o projeto
-
-```
+```bash
 git clone https://github.com/Andre-LCs/app-cidade-ativa.git
-cd app-cidade-ativa
+cd app-cidade-ativa/backend
 ```
 
-Entre na pasta do backend:
+### 2. Configurar o `.env`
 
-```
-cd backend
-```
+Cada integrante deve criar seu próprio arquivo:
 
-### 2. Instalar as dependências
-
-Na pasta `backend`:
-
-```
-npm install
-```
-
-Isso instala as dependências definidas no `package.json`.
-
-### 3. Configurar o `.env`
-
-Cada pessoa que for executar o backend deve criar seu próprio arquivo:
-
-```
+```text
 backend/.env
 ```
 
-O arquivo `.env` **não está no GitHub**.
+O arquivo `.env` **não deve ser enviado para o GitHub**.
 
-Podem copiar a estrutura de:
-
-```
-backend/.env.example
-```
-
-que serve como modelo.
-
-Copie o `.env.example` para `.env` e preencha as variáveis com os valores fornecidos individualmente para o projeto:
+Utilize o `.env.example` como referência:
 
 ```env
 DATABASE_URL=
@@ -72,54 +73,54 @@ A `DATABASE_URL` contém os dados de acesso ao PostgreSQL do projeto.
 
 O `JWT_SECRET` é utilizado para gerar e validar os tokens JWT.
 
-Não commitar o `.env`.
+### 3. Instalar as dependências
 
-### 4. Banco de dados
+Caso o projeto seja executado diretamente pelo Node.js:
 
-O banco PostgreSQL já está criado no Neon.
-
-A estrutura inicial está em:
-
-```
-backend/db/schema.sql
+```bash
+npm install
 ```
 
-A tabela `usuarios` já foi criada no banco.
+## Executando com Docker
 
-Portanto, **não é necessário criar outro banco ou outra tabela localmente**.
+O back-end possui configuração para execução utilizando **Docker** e **Docker Compose**.
 
-Alterações na estrutura do banco devem ser registradas no:
+O Docker é utilizado para padronizar o ambiente de execução do servidor Node.js.
+
+O PostgreSQL **não é executado dentro do Docker**. O container do back-end continua se conectando ao PostgreSQL hospedado no Neon.
+
+Para iniciar o back-end:
+
+```bash
+docker compose up --build
+```
+
+O servidor será iniciado na porta `3000`.
+
+Depois que a imagem já tiver sido construída, não é necessário utilizar `--build` novamente, a menos que ocorram alterações no `Dockerfile` ou nas dependências:
+
+```bash
+docker compose up
+```
+
+Para parar o container:
+
+```bash
+docker compose down
+```
+
+## Verificando o funcionamento
+
+Com o back-end em execução, acesse:
 
 ```text
-backend/db/schema.sql
-```
-
-e aplicadas ao banco do projeto quando necessário.
-
-## Executando o backend
-
-Para iniciar o servidor:
-
-```
-node index.js
-```
-
-Se estiver tudo correto, será exibido:
-
-```
-Servidor rodando na porta 3000
-```
-
-A API possui uma rota inicial para verificar se o servidor está funcionando:
-
-```
-GET /health
-```
-
-Acesse:
-
-```
 http://localhost:3000/health
+```
+
+Ou utilize:
+
+```bash
+curl http://localhost:3000/health
 ```
 
 Resultado esperado:
@@ -130,172 +131,197 @@ Resultado esperado:
 }
 ```
 
+## Executando sem Docker
+
+Também é possível executar o back-end diretamente pelo Node.js.
+
+Na pasta `backend`:
+
+```bash
+npm install
+node index.js
+```
+
+Resultado esperado:
+
+```text
+Servidor rodando na porta 3000
+```
+
 ## Autenticação
 
-O projeto utiliza JWT para autenticação.
+O projeto utiliza **JWT (JSON Web Token)** para autenticação.
 
 O arquivo:
 
-```
+```text
 backend/auth.js
 ```
 
-contém o middleware utilizado para verificar tokens JWT nas rotas protegidas.
+contém o middleware responsável por verificar os tokens enviados nas rotas protegidas.
 
-As rotas que exigirem autenticação deverão utilizar esse middleware.
+As rotas autenticadas utilizam o header:
 
-O token deverá identificar o usuário autenticado para que o backend consiga realizar operações relacionadas à sua conta.
+```text
+Authorization: Bearer <token>
+```
+
+O token identifica o usuário autenticado e permite que o back-end saiba qual usuário está realizando a operação.
 
 ## API
 
-Antes de implementar uma rota, consulte o:
+O contrato oficial da API está documentado no arquivo:
 
-```
+```text
 API.md
 ```
 
-Esse arquivo define o contrato da API, incluindo:
+Esse arquivo define:
 
-* método HTTP;
-* endereço da rota;
+* métodos HTTP;
+* endereços das rotas;
 * dados recebidos;
 * autenticação;
-* formato das respostas;
+* formatos das respostas;
+* códigos HTTP;
 * possíveis erros.
 
-O front-end também utilizará esse contrato para realizar as requisições.
+As quatro rotas da primeira entrega já estão implementadas:
+
+```text
+POST /cadastro
+POST /login
+GET /usuario/me
+PUT /usuario/me
+```
 
 ## Primeira entrega
 
-Para a primeira entrega, o foco do backend será colocar o seguinte fluxo para funcionar:
+O fluxo implementado no back-end é:
 
-```
+```text
 Cadastro
    ↓
 Login
    ↓
-Autenticação
+Autenticação JWT
    ↓
-Editar perfil
+Consulta do perfil
+   ↓
+Edição do perfil
    ↓
 Dados atualizados no PostgreSQL
 ```
 
 ### Cadastro
 
-Implementar:
+**POST `/cadastro`**
 
-```
-POST /cadastro
-```
+Responsável por criar um novo usuário.
 
-A rota deverá:
+O back-end:
 
-1. receber nome, e-mail e senha;
-2. validar os dados;
-3. verificar se o e-mail já está cadastrado;
-4. utilizar `bcrypt` para gerar o `senha_hash`;
-5. inserir o usuário no PostgreSQL;
-6. retornar a resposta definida no `API.md`.
+* recebe nome, e-mail e senha;
+* valida os dados;
+* verifica se o e-mail já está cadastrado;
+* utiliza `bcrypt` para gerar o `senha_hash`;
+* armazena o usuário no PostgreSQL;
+* retorna os dados permitidos pelo contrato da API.
 
-A senha **nunca deve ser armazenada diretamente no banco**.
+A senha nunca é armazenada em texto puro e nunca é retornada pela API.
 
 ### Login
 
-Implementar:
+**POST `/login`**
 
-```
-POST /login
-```
+Responsável por autenticar o usuário.
 
-A rota deverá:
+O back-end:
 
-1. receber e-mail e senha;
-2. procurar o usuário no PostgreSQL;
-3. comparar a senha recebida com `senha_hash` utilizando `bcrypt`;
-4. gerar um JWT utilizando `jsonwebtoken`;
-5. retornar a resposta definida no `API.md`.
+* recebe e-mail e senha;
+* procura o usuário no PostgreSQL;
+* compara a senha recebida com o `senha_hash` utilizando `bcrypt`;
+* gera um JWT utilizando `jsonwebtoken`;
+* retorna o token e os dados básicos do usuário.
 
-O token deverá conter o identificador do usuário para permitir que as rotas protegidas saibam qual usuário está realizando a operação.
+### Consulta do usuário
 
-### Edição de perfil
+**GET `/usuario/me`**
 
-Implementar as duas rotas definidas no `API.md` para a tela de edição de perfil:
+Rota protegida pelo JWT.
 
-```
-GET /usuario/me
-PUT /usuario/me
-```
+O back-end:
 
-O `GET /usuario/me` deverá:
+* verifica o token;
+* identifica o usuário autenticado;
+* busca os dados no PostgreSQL;
+* retorna os dados do usuário.
 
-1. verificar o JWT;
-2. identificar o usuário autenticado;
-3. buscar os dados atuais do usuário no PostgreSQL;
-4. retornar a resposta definida no `API.md`.
+### Atualização do usuário
 
-Essa rota é o que permite que a tela de edição de perfil abra com os campos Nome e Email já preenchidos com os dados atuais — sem ela, o front-end não tem como saber o que exibir antes do usuário editar.
+**PUT `/usuario/me`**
 
-O `PUT /usuario/me` deverá:
+Rota protegida pelo JWT.
 
-1. verificar o JWT;
-2. identificar o usuário autenticado;
-3. receber os dados permitidos para alteração;
-4. atualizar o registro correspondente no PostgreSQL;
-5. retornar a resposta definida no `API.md`.
+Permite atualizar os dados permitidos do usuário, como nome e e-mail.
 
-## Organização do desenvolvimento
-
-Cada integrante deve trabalhar em uma branch própria.
-
-Exemplo para cadastro:
-
-```bash
-git checkout main
-git pull
-git checkout -b feature/cadastro
-```
-
-Exemplo para login:
-
-```bash
-git checkout main
-git pull
-git checkout -b feature/login
-```
-
-Depois de finalizar a tarefa:
-
-```bash
-git add .
-git commit -m "Implementa cadastro"
-git push -u origin feature/cadastro
-```
-
-ou:
-
-```bash
-git add .
-git commit -m "Implementa login"
-git push -u origin feature/login
-```
-
-Depois, abrir um Pull Request para `main`.
-
-Antes de começar uma nova tarefa, atualize sua branch com a versão mais recente da `main`.
+O back-end identifica o usuário através do JWT e atualiza o registro correspondente no PostgreSQL.
 
 ## Estrutura atual
 
 ```text
 backend/
 ├── db/
+│   ├── pool.js
 │   └── schema.sql
+├── routes/
+│   ├── cadastro.js
+│   ├── login.js
+│   └── usuario.js
+├── .dockerignore
 ├── .env.example
 ├── auth.js
+├── Dockerfile
+├── docker-compose.yml
 ├── index.js
 ├── package.json
 ├── package-lock.json
 └── README.md
 ```
 
-Novos arquivos e pastas podem ser criados conforme a implementação das funcionalidades.
+## Organização do desenvolvimento
+
+Cada integrante deve trabalhar em uma branch própria.
+
+Para iniciar uma nova tarefa:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/nome-da-tarefa
+```
+
+Depois de finalizar:
+
+```bash
+git add .
+git commit -m "Descrição da alteração"
+git push -u origin feature/nome-da-tarefa
+```
+
+Depois, abrir um **Pull Request** para `main`.
+
+Antes de iniciar uma nova tarefa, atualizar a branch com a versão mais recente da `main`.
+
+## Segurança
+
+Informações sensíveis não devem ser commitadas no repositório.
+
+O arquivo `.env` é ignorado pelo Git e pelo Docker através do `.gitignore` e `.dockerignore`.
+
+Nunca colocar no código-fonte:
+
+* senha do banco;
+* `DATABASE_URL`;
+* `JWT_SECRET`;
+* outras credenciais ou tokens.
