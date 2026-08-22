@@ -1,43 +1,30 @@
 # Design Tokens — Cidade Ativa
 
-Referência de cores, tipografia e espaçamento usada nos mockups (Figma) para manter a consistência visual quando as telas forem implementadas em React Native.
-
-O Figma continua sendo a referência visual principal. Este arquivo serve como guia dos valores utilizados nos mockups.
+Paleta oficial, baseada no que já foi implementado na tela de Login. Usar os mesmos
+valores em Cadastro e Editar Perfil para manter consistência visual entre as telas.
 
 ## Cores
 
 | Nome | Hex | Uso |
 |---|---|---|
-| Azul escuro | `#0C447C` | Títulos, nome da marca, texto de destaque |
-| Azul médio | `#185FA5` | Botões primários (Entrar, Cadastrar, Salvar), elementos de ação |
-| Azul claro | `#E6F1FB` | Fundos suaves, círculos de ícone, estados hover leves |
-| Verde | `#3B6D11` | Links, ações secundárias ("Cadastre-se", "Entrar") |
-| Texto secundário (cinza) | `#5F5E5A` | Labels de campo, subtítulos, texto de apoio |
-| Borda (cinza claro) | `#D3D1C7` | Borda dos campos de input no estado normal |
-| Fundo geral | `#FFFFFF` | Fundo das telas |
-| Erro (vermelho) | `#E24B4A` | Borda de campo com erro, mensagens de validação |
+| Azul principal | `#1F3F77` | Títulos, texto de marca, botões primários, borda de campo focado |
+| Verde | `#32A041` | Links (Cadastre-se, Entrar, Esqueceu a senha) |
+| Fundo da tela | `#F8FAFC` | Fundo geral |
+| Fundo do card | `#FFFFFF` | Cartão do formulário |
+| Fundo do input | `#F1F5F9` | Campos de texto (estado normal) |
+| Borda | `#E2E8F0` | Borda dos campos (estado normal) |
+| Texto principal | `#0F172A` | Texto de input, labels |
+| Texto secundário | `#64748B` | Subtítulos, placeholders |
 
-## Tipografia
+## Componentes já padronizados (ver `login.tsx` como referência)
 
-- Fonte recomendada: **Inter**
-- Título de tela: 24–26px, bold
-- Nome da marca (CIDADE ATIVA): 13–14px, bold, letter-spacing leve
-- Subtítulo: 13px, regular, cor de texto secundário
-- Label de campo: 13px, medium
-- Texto de botão: 15px, bold
+- **Card do formulário**: `borderRadius: 16`, sombra leve (`shadowOpacity: 0.05`), borda `1px` `#F1F5F9`
+- **Campo de input**: `borderRadius: 10`, `height: 44`, ícone à esquerda (Ionicons), borda muda de cor no foco
+- **Botão primário**: `borderRadius: 10`, `height: 46`, sombra na cor do botão
+- **Ícone de mostrar/ocultar senha**: `eye-outline` / `eye-off-outline` (Ionicons)
 
-## Espaçamento
+## Bibliotecas usadas
 
-- Padding lateral das telas: 24px
-- Altura dos campos de input: 48px, borda arredondada 12px
-- Altura dos botões: 52px, borda arredondada 14px
-- Espaço entre campos: 28px
-- Grid geral: múltiplos de 8px
-
-## Estados dos campos
-
-Os estados devem seguir o Figma como referência visual:
-
-- **Normal:** borda `#D3D1C7`, espessura 1.2px
-- **Focado:** borda `#185FA5`, espessura 2px
-- **Erro:** borda `#E24B4A`, espessura 2px, com mensagem de erro abaixo do campo
+- `@expo/vector-icons` (Ionicons) — todos os ícones de campo
+- `expo-secure-store` — armazenamento do token JWT após login
+- `expo-router` — navegação entre telas

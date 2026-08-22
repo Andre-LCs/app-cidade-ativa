@@ -9,8 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as tokenStorage from '../services/tokenStorage'; //Novo import para usar o helper de armazenamento seguro
+
 
 const COLORS = {
   primaryBlue: '#1F3F77',
@@ -25,16 +29,66 @@ const COLORS = {
   white: '#FFFFFF',
 };
 
+function showAlert(title: string, message: string) {
+  if (Platform.OS === 'web') {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+}
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
+
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login solicitado com:', { email, password });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      showAlert('Atenção', 'E-mail e senha são obrigatórios.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // IMPORTANTE: Troque "localhost" pelo IP da sua máquina na rede local
+      // se estiver testando em celular físico via Expo Go.
+      // Exemplo: 'http://192.168.1.15:3000/login'
+      const apiUrl = 'http://localhost:3000/login';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email, senha: password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // HTTP 200 - Login com sucesso!
+        await tokenStorage.setItem('token', data.token);
+        await tokenStorage.setItem('usuario', JSON.stringify(data.usuario));
+        console.log('Token salvo com sucesso.');
+
+        showAlert('Sucesso', `Bem-vindo(a), ${data.usuario.nome}!`);
+
+      } else {
+        // HTTP 400 ou 401 - Erro tratado pelo backend
+        showAlert('Falha no Login', data.erro);
+      }
+    } catch (error) {
+      console.error('Erro na requisição:', error);
+      showAlert('Erro', 'Não foi possível conectar ao servidor. Verifique sua internet ou se o backend está rodando no IP correto.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -43,10 +97,9 @@ export default function Login() {
       style={styles.container}
     >
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
+
       <View style={styles.innerContainer}>
-        
-        {/* SEÇÃO DA LOGO (BEM MAIOR) */}
+
         <View style={styles.logoContainer}>
           <Image
             source={require('../../assets/images/logo-projeto.png')}
@@ -55,27 +108,25 @@ export default function Login() {
           />
         </View>
 
-        {/* CARD DO FORMULÁRIO */}
         <View style={styles.card}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Bem-vindo!</Text>
             <Text style={styles.subtitle}>Acesse sua conta no Cidade Ativa</Text>
           </View>
 
-          {/* CAMPO DE E-MAIL */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>E-mail ou Usuário</Text>
-            <View 
+            <View
               style={[
-                styles.inputWrapper, 
+                styles.inputWrapper,
                 isEmailFocused && styles.inputWrapperFocused
               ]}
             >
-              <Ionicons 
-                name="mail-outline" 
-                size={18} 
-                color={isEmailFocused ? COLORS.primaryBlue : COLORS.textSecondary} 
-                style={styles.inputIcon} 
+              <Ionicons
+                name="mail-outline"
+                size={18}
+                color={isEmailFocused ? COLORS.primaryBlue : COLORS.textSecondary}
+                style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
@@ -92,20 +143,19 @@ export default function Login() {
             </View>
           </View>
 
-          {/* CAMPO DE SENHA */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Senha</Text>
-            <View 
+            <View
               style={[
-                styles.inputWrapper, 
+                styles.inputWrapper,
                 isPasswordFocused && styles.inputWrapperFocused
               ]}
             >
-              <Ionicons 
-                name="lock-closed-outline" 
-                size={18} 
-                color={isPasswordFocused ? COLORS.primaryBlue : COLORS.textSecondary} 
-                style={styles.inputIcon} 
+              <Ionicons
+                name="lock-closed-outline"
+                size={18}
+                color={isPasswordFocused ? COLORS.primaryBlue : COLORS.textSecondary}
+                style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
@@ -117,36 +167,38 @@ export default function Login() {
                 onFocus={() => setIsPasswordFocused(true)}
                 onBlur={() => setIsPasswordFocused(false)}
               />
-              <TouchableOpacity 
-                onPress={() => setIsPasswordVisible(!isPasswordVisible)} 
+              <TouchableOpacity
+                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
                 style={styles.eyeIcon}
                 activeOpacity={0.7}
               >
-                <Ionicons 
-                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} 
-                  size={18} 
-                  color={COLORS.textSecondary} 
+                <Ionicons
+                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                  size={18}
+                  color={COLORS.textSecondary}
                 />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* ESQUECEU A SENHA */}
           <TouchableOpacity style={styles.forgotPasswordButton} activeOpacity={0.7}>
             <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
-          {/* BOTÃO DE ENTRAR */}
-          <TouchableOpacity 
-            style={styles.loginButton} 
+          <TouchableOpacity
+            style={[styles.loginButton, isLoading && { opacity: 0.7 }]}
             onPress={handleLogin}
             activeOpacity={0.8}
+            disabled={isLoading}
           >
-            <Text style={styles.loginButtonText}>Entrar</Text>
+            {isLoading ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <Text style={styles.loginButtonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* RODAPÉ */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Ainda não tem uma conta?</Text>
           <TouchableOpacity activeOpacity={0.7}>
@@ -175,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 340, // Logo bem maior
+    width: 340,
     height: 170,
   },
   card: {
