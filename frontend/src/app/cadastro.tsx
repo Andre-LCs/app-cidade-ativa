@@ -9,13 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  Alert,
   ActivityIndicator,
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import logoImg from '@/assets/images/logo-projeto.png';
 // Importa a função de conexão com a API
 import { apiRequest } from '../services/api';
 
@@ -32,16 +31,17 @@ const COLORS = {
   textSecondary: '#64748B',
   placeholder: '#94A3B8',
   white: '#FFFFFF',
+  error: '#DC2626',
+  errorBackground: '#FEF2F2',
+  errorBorder: '#FECACA',
+  successBackground: '#F0FDF4',
+  successBorder: '#BBF7D0',
 };
 
-// Alerta compatível com Web e Celular
-function showAlert(title: string, message: string) {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`);
-  } else {
-    Alert.alert(title, message);
-  }
-}
+type StatusMessage = {
+  tipo: 'sucesso' | 'erro';
+  texto: string;
+};
 
 export default function Cadastro() {
   const [nome, setNome] = useState('');
@@ -58,21 +58,25 @@ export default function Cadastro() {
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
 
- const handleCadastro = async () => {
+  const handleCadastro = async () => {
+    setStatusMessage(null);
+
     if (!nome.trim() || !email.trim() || !senha.trim() || !confirmarSenha.trim()) {
-      showAlert('Erro', 'Por favor, preencha todos os campos.');
+      setStatusMessage({ tipo: 'erro', texto: 'Por favor, preencha todos os campos.' });
       return;
     }
 
     if (senha !== confirmarSenha) {
-      showAlert('Erro', 'As senhas não coincidem.');
+      setStatusMessage({ tipo: 'erro', texto: 'As senhas não coincidem.' });
       return;
     }
 
     setIsLoading(true);
 
     try {
+      // Sucesso (201): o back-end responde com o usuário criado.
       await apiRequest('/cadastro', {
         method: 'POST',
         body: JSON.stringify({
@@ -82,14 +86,22 @@ export default function Cadastro() {
         }),
       });
 
-      showAlert('Sucesso', 'Cadastro realizado com sucesso!');
-      router.back();
+      setStatusMessage({ tipo: 'sucesso', texto: 'Cadastro realizado com sucesso!' });
+      setTimeout(() => router.back(), 1500);
     } catch (error: any) {
-      const mensagemErro = (error.message === 'Failed to fetch' || !error.message)
-        ? 'Não foi possível realizar a conexão com o servidor.'
-        : error.message;
+      const semConexao =
+        !error.message ||
+        error.message === 'Failed to fetch' ||
+        error.message === 'Network request failed';
 
-      showAlert('Erro no Cadastro', mensagemErro);
+      // 400 (validação ou e-mail já cadastrado) chega aqui com a mensagem
+      // vinda de data.erro, lançada pelo apiRequest.
+      setStatusMessage({
+        tipo: 'erro',
+        texto: semConexao
+          ? 'Não foi possível realizar a conexão com o servidor.'
+          : error.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -107,16 +119,41 @@ export default function Cadastro() {
         showsVerticalScrollIndicator={false}
       >
       <View style={styles.logoContainer}>
-  <Text style={{ fontSize: 28, fontWeight: '800', color: COLORS.primaryBlue }}>
-    Cidade Ativa
-  </Text>
-</View> 
+        <Image source={logoImg} style={styles.logo} resizeMode="contain" />
+      </View>
 
         <View style={styles.card}>
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Crie sua conta</Text>
             <Text style={styles.subtitle}>Cadastre-se no Cidade Ativa</Text>
           </View>
+
+          {statusMessage && (
+            <View
+              style={[
+                styles.statusBanner,
+                statusMessage.tipo === 'sucesso'
+                  ? styles.statusBannerSuccess
+                  : styles.statusBannerError,
+              ]}
+            >
+              <Ionicons
+                name={statusMessage.tipo === 'sucesso' ? 'checkmark-circle-outline' : 'alert-circle-outline'}
+                size={18}
+                color={statusMessage.tipo === 'sucesso' ? COLORS.primaryGreen : COLORS.error}
+              />
+              <Text
+                style={[
+                  styles.statusBannerText,
+                  statusMessage.tipo === 'sucesso'
+                    ? styles.statusBannerTextSuccess
+                    : styles.statusBannerTextError,
+                ]}
+              >
+                {statusMessage.texto}
+              </Text>
+            </View>
+          )}
 
           {/* Nome Completo */}
           <View style={styles.inputGroup}>
@@ -307,6 +344,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textSecondary,
     fontWeight: '400',
+  },
+  statusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  statusBannerSuccess: {
+    backgroundColor: COLORS.successBackground,
+    borderColor: COLORS.successBorder,
+  },
+  statusBannerError: {
+    backgroundColor: COLORS.errorBackground,
+    borderColor: COLORS.errorBorder,
+  },
+  statusBannerText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  statusBannerTextSuccess: {
+    color: COLORS.primaryGreen,
+  },
+  statusBannerTextError: {
+    color: COLORS.error,
   },
   inputGroup: {
     marginBottom: 12,
