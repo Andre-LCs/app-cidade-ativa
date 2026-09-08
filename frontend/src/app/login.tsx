@@ -13,7 +13,8 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as tokenStorage from '../services/tokenStorage'; //Novo import para usar o helper de armazenamento seguro
+import { router } from 'expo-router'; // NOVO: necessário pra navegar pro Cadastro
+import * as tokenStorage from '../services/tokenStorage';
 
 
 const COLORS = {
@@ -201,7 +202,7 @@ export default function Login() {
 
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Ainda não tem uma conta?</Text>
-          <TouchableOpacity activeOpacity={0.7}>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/cadastro')}>
             <Text style={styles.registerButtonText}>Cadastre-se</Text>
           </TouchableOpacity>
         </View>
