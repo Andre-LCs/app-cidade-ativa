@@ -87,7 +87,7 @@ export default function Cadastro() {
       });
 
       setStatusMessage({ tipo: 'sucesso', texto: 'Cadastro realizado com sucesso!' });
-      setTimeout(() => router.back(), 1500);
+      setTimeout(() => router.replace('/login'), 1500); // CORRIGIDO: era router.back()
     } catch (error: any) {
       const semConexao =
         !error.message ||
@@ -289,7 +289,7 @@ export default function Cadastro() {
         {/* Rodapé */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerText}>Já tem uma conta?</Text>
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.replace('/login')} activeOpacity={0.7}>
             <Text style={styles.linkText}>Entrar</Text>
           </TouchableOpacity>
         </View>
