@@ -79,6 +79,8 @@ export default function Login() {
         console.log('Token salvo com sucesso.');
 
         showAlert('Sucesso', `Bem-vindo(a), ${data.usuario.nome}!`);
+        router.replace('/perfil');
+        
 
       } else {
         // HTTP 400 ou 401 - Erro tratado pelo backend
