@@ -11,14 +11,13 @@ Esses registros poderão aparecer em um mapa, criando uma visão mais clara dos 
 * André Lucas Aquino Carneiro e Silva
 * Felipe Rogério Pereira Soares
 * Gabriely Rocha Nascimento
-* Isabela Alecrim de França
 * Jadson Lopes Fonseca
 * Karla Léa Nascimento Querre
 * Matheus Fernandes Cardoso da Conceição
 * Rafael Ferreira Tassinari
 * Ruan Evangelista Gomes
-* Thalita Kamille Soares Veras
 * Tuliane Lima Carneiro
+* Luiz Fillpy Rodrigues Ferreira
 
 ## Ideia do projeto
 
