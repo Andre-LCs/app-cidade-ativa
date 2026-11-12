@@ -148,6 +148,128 @@ Authorization: Bearer <token>
 
 ---
 
+## GET /categorias
+
+Lista as categorias de ocorrência (usada no seletor da tela "Nova Ocorrência").
+
+**Header obrigatório:**
+```
+Authorization: Bearer <token>
+```
+
+**Retorna 200 (sucesso):**
+```json
+[
+  { "id": 1, "nome": "Buraco na via", "descricao": "Buracos e danos no asfalto/pavimento" },
+  { "id": 2, "nome": "Iluminação pública", "descricao": "Lâmpadas apagadas ou postes danificados" }
+]
+```
+
+**Retorna 401 (sem token ou token inválido):**
+```json
+{ "erro": "não autorizado" }
+```
+
+---
+
+## POST /ocorrencias
+
+Registra uma nova ocorrência para o usuário autenticado.
+
+**Header obrigatório:**
+```
+Authorization: Bearer <token>
+```
+
+**Recebe (JSON):**
+```json
+{
+  "categoria_id": 1,
+  "titulo": "Buraco grande na via",
+  "descricao": "Buraco em frente ao número 120, ocupa metade da pista",
+  "foto_url": "https://res.cloudinary.com/emwfrhrc/image/upload/v1/exemplo.png",
+  "latitude": -15.7801,
+  "longitude": -47.9292
+}
+```
+Campos obrigatórios: `categoria_id`, `titulo`, `latitude` e `longitude`. `descricao` e `foto_url` são opcionais.
+
+**Retorna 201 (sucesso):**
+```json
+{
+  "id": 1,
+  "usuario_id": 2,
+  "categoria_id": 1,
+  "titulo": "Buraco grande na via",
+  "descricao": "Buraco em frente ao número 120, ocupa metade da pista",
+  "foto_url": "https://res.cloudinary.com/emwfrhrc/image/upload/v1/exemplo.png",
+  "latitude": -15.7801,
+  "longitude": -47.9292,
+  "status": "ABERTA",
+  "criado_em": "2026-10-20T22:54:15.000Z"
+}
+```
+
+**Retorna 400 (campo faltando ou inválido):**
+```json
+{ "erro": "categoria_id, titulo, latitude e longitude são obrigatórios" }
+```
+```json
+{ "erro": "latitude ou longitude inválida" }
+```
+```json
+{ "erro": "categoria não encontrada" }
+```
+
+**Retorna 401 (sem token ou token inválido):**
+```json
+{ "erro": "não autorizado" }
+```
+
+Regras:
+- `latitude` deve estar entre -90 e 90, e `longitude` entre -180 e 180.
+- O back-end grava a posição com `ST_MakePoint(longitude, latitude)`: **longitude primeiro**, ao contrário do que falamos no dia a dia.
+- A foto não passa pela API: o app envia direto ao Cloudinary e manda só o link em `foto_url`.
+- Toda ocorrência nova começa com `status: "ABERTA"`.
+
+---
+
+## GET /ocorrencias
+
+Lista ocorrências, da mais recente para a mais antiga.
+
+**Header obrigatório:**
+```
+Authorization: Bearer <token>
+```
+
+**Parâmetro opcional (query):** `?minhas=true` retorna só as ocorrências do usuário autenticado (usado na tela "Minhas Ocorrências"). Sem o parâmetro, retorna todas.
+
+**Retorna 200 (sucesso):**
+```json
+[
+  {
+    "id": 1,
+    "usuario_id": 2,
+    "categoria_id": 1,
+    "categoria_nome": "Buraco na via",
+    "titulo": "Buraco grande na via",
+    "descricao": "Buraco em frente ao número 120, ocupa metade da pista",
+    "foto_url": "https://res.cloudinary.com/emwfrhrc/image/upload/v1/exemplo.png",
+    "latitude": -15.7801,
+    "longitude": -47.9292,
+    "status": "ABERTA",
+    "criado_em": "2026-10-20T22:54:15.000Z"
+  }
+]
+```
+
+**Retorna 401 (sem token ou token inválido):**
+```json
+{ "erro": "não autorizado" }
+```
+---
+
 ## Padrão de erros
 
 Toda resposta de erro segue o mesmo formato:

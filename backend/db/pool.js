@@ -1,4 +1,7 @@
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// BIGINT (tipo 20) volta como texto por padrão; converte para número, como o API.md documenta.
+types.setTypeParser(20, (valor) => parseInt(valor, 10));
 
 const pool = new Pool({
   host: process.env.DATABASE_HOST,

@@ -5,6 +5,8 @@ const cors = require('cors');
 const cadastroRoutes = require('./routes/cadastro');
 const loginRoutes = require('./routes/login');
 const usuarioRoutes = require('./routes/usuario');
+const categoriasRoutes = require('./routes/categorias');
+const ocorrenciasRoutes = require('./routes/ocorrencias');
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.get('/health', (req, res) => {
 app.use('/cadastro', cadastroRoutes);
 app.use('/login', loginRoutes);
 app.use('/usuario', usuarioRoutes);
+app.use('/categorias', categoriasRoutes);
+app.use('/ocorrencias', ocorrenciasRoutes);
 
 const PORT = process.env.PORT || 3000;
 
