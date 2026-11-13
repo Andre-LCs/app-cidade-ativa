@@ -1,4 +1,4 @@
-# Contrato da API — Cadastro, Login e Usuário
+# Contrato da API — Cadastro, Login, Usuário e Ocorrências
 
 > Os dados apresentados nos exemplos são fictícios e servem apenas para demonstrar o formato das requisições e respostas.
 
@@ -220,6 +220,9 @@ Campos obrigatórios: `categoria_id`, `titulo`, `latitude` e `longitude`. `descr
 ```json
 { "erro": "categoria não encontrada" }
 ```
+```json
+{ "erro": "foto_url inválida" }
+```
 
 **Retorna 401 (sem token ou token inválido):**
 ```json
@@ -229,14 +232,15 @@ Campos obrigatórios: `categoria_id`, `titulo`, `latitude` e `longitude`. `descr
 Regras:
 - `latitude` deve estar entre -90 e 90, e `longitude` entre -180 e 180.
 - O back-end grava a posição com `ST_MakePoint(longitude, latitude)`: **longitude primeiro**, ao contrário do que falamos no dia a dia.
-- A foto não passa pela API: o app envia direto ao Cloudinary e manda só o link em `foto_url`.
+- A foto não passa pela API: o app envia direto ao Cloudinary e manda só o link em `foto_url`. Se enviado, o link precisa começar com `https://`.
+- `titulo` e `descricao` são gravados sem espaços nas pontas.
 - Toda ocorrência nova começa com `status: "ABERTA"`.
 
 ---
 
 ## GET /ocorrencias
 
-Lista ocorrências, da mais recente para a mais antiga.
+Lista ocorrências, da mais recente para a mais antiga. Nesta etapa a lista não tem paginação.
 
 **Header obrigatório:**
 ```
@@ -268,6 +272,7 @@ Authorization: Bearer <token>
 ```json
 { "erro": "não autorizado" }
 ```
+
 ---
 
 ## Padrão de erros
@@ -280,8 +285,8 @@ Toda resposta de erro segue o mesmo formato:
 ## Códigos HTTP usados
 | Código | Significado |
 |---|---|
-| 200 | Sucesso (login, consulta, atualização) |
-| 201 | Sucesso (criação de recurso — cadastro) |
+| 200 | Sucesso (login, consulta, listagem, atualização) |
+| 201 | Sucesso (criação de recurso — cadastro e ocorrência) |
 | 400 | Erro do cliente (dado inválido/faltando) |
 | 401 | Não autenticado (token ausente/inválido, ou credenciais erradas) |
 | 500 | Erro interno do servidor |
