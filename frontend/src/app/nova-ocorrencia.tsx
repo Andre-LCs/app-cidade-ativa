@@ -69,6 +69,10 @@ export default function NovaOcorrencia() {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [localMsg, setLocalMsg] = useState<string | null>(null);
+  // Fallback: se o GPS/navegador falhar, o usuário pode informar as coordenadas manualmente
+  const [modoManual, setModoManual] = useState(false);
+  const [latTexto, setLatTexto] = useState('-15.7801');
+  const [lonTexto, setLonTexto] = useState('-47.9292');
 
   const [isTituloFocused, setIsTituloFocused] = useState(false);
   const [isDescricaoFocused, setIsDescricaoFocused] = useState(false);
@@ -121,6 +125,7 @@ export default function NovaOcorrencia() {
       const permissao = await Location.requestForegroundPermissionsAsync();
       if (permissao.status !== 'granted') {
         setLocalMsg('Permissão de localização negada. Ative nas configurações do aparelho ou do navegador.');
+        setModoManual(true);
         return;
       }
 
@@ -129,8 +134,10 @@ export default function NovaOcorrencia() {
         20000
       );
       setCoords({ latitude: posicao.coords.latitude, longitude: posicao.coords.longitude });
+      setModoManual(false);
     } catch {
       setLocalMsg('Não foi possível obter a localização. Verifique se o GPS está ligado e tente de novo.');
+      setModoManual(true);
     } finally {
       setBuscandoLocal(false);
     }
@@ -167,7 +174,19 @@ export default function NovaOcorrencia() {
       setStatusMessage({ tipo: 'erro', texto: 'Informe um título para a ocorrência.' });
       return;
     }
-    if (!coords) {
+
+    // Usa o GPS quando disponível; senão, as coordenadas digitadas manualmente
+    let local: Coords | null = coords;
+    if (!local && modoManual) {
+      const lat = parseFloat(latTexto.trim().replace(',', '.'));
+      const lon = parseFloat(lonTexto.trim().replace(',', '.'));
+      if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        setStatusMessage({ tipo: 'erro', texto: 'Latitude ou longitude inválida.' });
+        return;
+      }
+      local = { latitude: lat, longitude: lon };
+    }
+    if (!local) {
       setStatusMessage({ tipo: 'erro', texto: 'Aguarde a localização ou toque em "Tentar de novo".' });
       return;
     }
@@ -203,8 +222,8 @@ export default function NovaOcorrencia() {
           titulo: titulo.trim(),
           descricao: descricao.trim() || undefined,
           foto_url: fotoUrl,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
+          latitude: local.latitude,
+          longitude: local.longitude,
         }),
       });
 
@@ -376,6 +395,32 @@ export default function NovaOcorrencia() {
                 <Text style={styles.linkTexto}>{coords ? 'Atualizar' : 'Tentar de novo'}</Text>
               </TouchableOpacity>
             </View>
+
+            {modoManual && !coords && (
+              <View style={styles.manualBox}>
+                <Text style={styles.manualAviso}>
+                  Sem GPS? Informe as coordenadas manualmente (padrão: Brasília).
+                </Text>
+                <View style={styles.manualLinha}>
+                  <TextInput
+                    style={styles.manualInput}
+                    placeholder="Latitude"
+                    placeholderTextColor={COLORS.placeholder}
+                    keyboardType="numbers-and-punctuation"
+                    value={latTexto}
+                    onChangeText={setLatTexto}
+                  />
+                  <TextInput
+                    style={styles.manualInput}
+                    placeholder="Longitude"
+                    placeholderTextColor={COLORS.placeholder}
+                    keyboardType="numbers-and-punctuation"
+                    value={lonTexto}
+                    onChangeText={setLonTexto}
+                  />
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Botão registrar */}
@@ -488,6 +533,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   localTexto: { flex: 1, fontSize: 13, color: COLORS.textPrimary },
+  manualBox: { marginTop: 8 },
+  manualAviso: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 6 },
+  manualLinha: { flexDirection: 'row', gap: 10 },
+  manualInput: {
+    flex: 1,
+    height: 44,
+    backgroundColor: COLORS.inputBackground,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
   linkTexto: { color: COLORS.primaryGreen, fontSize: 13, fontWeight: '700' },
   primaryButton: {
     backgroundColor: COLORS.primaryBlue,
