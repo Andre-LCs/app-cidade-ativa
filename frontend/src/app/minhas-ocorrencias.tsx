@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
 
@@ -63,6 +64,7 @@ function formatarData(iso: string) {
 }
 
 export default function MinhasOcorrencias() {
+  const insets = useSafeAreaInsets();
   const [itens, setItens] = useState<Ocorrencia[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
@@ -189,7 +191,7 @@ export default function MinhasOcorrencias() {
         />
       )}
 
-      <View style={styles.rodape}>
+        <View style={[styles.rodape, { paddingBottom: 16 + insets.bottom }]}>
         <TouchableOpacity
           style={styles.primaryButton}
           activeOpacity={0.8}
