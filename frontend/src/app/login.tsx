@@ -15,6 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router'; // NOVO: necessário pra navegar pro Cadastro
 import * as tokenStorage from '../services/tokenStorage';
+import { API_URL } from '../services/api';
 
 
 const COLORS = {
@@ -57,10 +58,9 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // IMPORTANTE: Troque "localhost" pelo IP da sua máquina na rede local
-      // se estiver testando em celular físico via Expo Go.
-      // Exemplo: 'http://192.168.1.15:3000/login'
-      const apiUrl = 'http://localhost:3000/login';
+      // O endereço da API vem de EXPO_PUBLIC_API_URL (frontend/.env).
+      // No celular (Expo Go), use o IP da máquina na rede local.
+      const apiUrl = `${API_URL}/login`;
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -79,7 +79,7 @@ export default function Login() {
         console.log('Token salvo com sucesso.');
 
         showAlert('Sucesso', `Bem-vindo(a), ${data.usuario.nome}!`);
-        router.replace('/perfil');
+        router.replace('/minhas-ocorrencias');
         
 
       } else {

@@ -247,7 +247,7 @@ export default function Perfil() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.cancelButton} activeOpacity={0.7} onPress={() => router.replace('/login')}>
+          <TouchableOpacity style={styles.cancelButton} activeOpacity={0.7} onPress={() => router.replace('/minhas-ocorrencias')}>
             <Text style={styles.cancelButtonText}>Cancelar</Text>
           </TouchableOpacity>
         </View>
