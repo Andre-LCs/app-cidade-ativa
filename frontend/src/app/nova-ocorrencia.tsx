@@ -67,6 +67,7 @@ export default function NovaOcorrencia() {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [fotoUri, setFotoUri] = useState<string | null>(null);
+  const [fotoBase64, setFotoBase64] = useState<string | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [localMsg, setLocalMsg] = useState<string | null>(null);
   // Fallback: se o GPS/navegador falhar, o usuário pode informar as coordenadas manualmente
@@ -150,16 +151,18 @@ export default function NovaOcorrencia() {
       return;
     }
 
-    const resultado = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7 });
+    const resultado = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
     if (!resultado.canceled) {
       setFotoUri(resultado.assets[0].uri);
+      setFotoBase64(resultado.assets[0].base64 ?? null);
     }
   };
 
   const escolherDaGaleria = async () => {
-    const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
+    const resultado = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, base64: true });
     if (!resultado.canceled) {
       setFotoUri(resultado.assets[0].uri);
+      setFotoBase64(resultado.assets[0].base64 ?? null);
     }
   };
 
@@ -204,7 +207,7 @@ export default function NovaOcorrencia() {
 
       if (fotoUri) {
         try {
-          fotoUrl = await uploadImagem(fotoUri);
+          fotoUrl = await uploadImagem(fotoUri, fotoBase64);
         } catch (erroFoto: any) {
           // mostra o motivo real (ex.: preset inválido, sem internet, foto grande demais)
           const motivo =
@@ -359,7 +362,7 @@ export default function NovaOcorrencia() {
             {fotoUri ? (
               <View>
                 <Image source={{ uri: fotoUri }} style={styles.preview} resizeMode="cover" />
-                <TouchableOpacity style={styles.removerFoto} activeOpacity={0.7} onPress={() => setFotoUri(null)}>
+                <TouchableOpacity style={styles.removerFoto} activeOpacity={0.7} onPress={() => { setFotoUri(null); setFotoBase64(null); }}>
                   <Ionicons name="trash-outline" size={16} color={COLORS.error} />
                   <Text style={styles.removerFotoTexto}>Remover foto</Text>
                 </TouchableOpacity>

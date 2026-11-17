@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-export async function uploadImagem(uri: string): Promise<string> {
+export async function uploadImagem(uri: string, base64?: string | null): Promise<string> {
   if (!CLOUD_NAME || !UPLOAD_PRESET) {
     throw new Error('Cloudinary não configurado (.env do front-end).');
   }
@@ -18,8 +18,12 @@ export async function uploadImagem(uri: string): Promise<string> {
     // na web a uri é um blob/data URL: precisa virar arquivo
     const blob = await (await fetch(uri)).blob();
     form.append('file', blob, 'foto.jpg');
+  } else if (base64) {
+    // no celular enviamos a foto como texto (data URI em Base64). O fetch do Expo SDK 57
+    // não aceita o objeto { uri, type, name } do React Native ("Unsupported FormDataPart").
+    form.append('file', `data:image/jpeg;base64,${base64}`);
   } else {
-    // no celular o React Native aceita um objeto { uri, type, name }
+    // alternativa (versões antigas do React Native)
     form.append('file', { uri, type: 'image/jpeg', name: 'foto.jpg' } as any);
   }
 
