@@ -1,24 +1,25 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Cidade Ativa",
+    "slug": "cidade-ativa",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
-    "userInterfaceStyle": "automatic",
+    "scheme": "cidadeativa",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.cidadeativa.app"
     },
     "android": {
+      "package": "com.cidadeativa.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.frontend"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
@@ -29,16 +30,47 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 220
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Cidade Ativa usa a sua localização para marcar no mapa onde está o problema urbano que você está reportando."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Cidade Ativa acessa suas fotos para anexar uma imagem à ocorrência.",
+          "cameraPermission": "O Cidade Ativa usa a câmera para fotografar o problema urbano que você está reportando.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enableMinifyInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "609685fa-b0ee-4958-8da7-c4a4e8f9f948"
+      }
+    },
+    "owner": "andre-lcs"
   }
 }

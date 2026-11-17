@@ -205,10 +205,15 @@ export default function NovaOcorrencia() {
       if (fotoUri) {
         try {
           fotoUrl = await uploadImagem(fotoUri);
-        } catch {
+        } catch (erroFoto: any) {
+          // mostra o motivo real (ex.: preset inválido, sem internet, foto grande demais)
+          const motivo =
+            erroFoto?.message && erroFoto.message !== 'Network request failed'
+              ? erroFoto.message
+              : 'sem conexão com o serviço de imagens';
           setStatusMessage({
             tipo: 'erro',
-            texto: 'Não foi possível enviar a foto. Tente novamente ou remova a foto para registrar sem ela.',
+            texto: `Não foi possível enviar a foto (${motivo}). Tente novamente ou remova a foto para registrar sem ela.`,
           });
           return;
         }

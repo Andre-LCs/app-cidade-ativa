@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://cidade-ativa-api.onrender.com",
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "emwfrhrc",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "cidade_ativa_ocorrencias"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://cidade-ativa-api.onrender.com",
+        "EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME": "emwfrhrc",
+        "EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET": "cidade_ativa_ocorrencias"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
