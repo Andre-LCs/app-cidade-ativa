@@ -151,9 +151,14 @@ export default function MinhasOcorrencias() {
           title: 'Minhas ocorrências',
           headerBackVisible: false,
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.push('/perfil')} accessibilityLabel="Abrir perfil">
-              <Ionicons name="person-circle-outline" size={28} color={COLORS.primaryBlue} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <TouchableOpacity onPress={() => router.push('/mapa')} accessibilityLabel="Abrir mapa de ocorrências">
+                <Ionicons name="map-outline" size={26} color={COLORS.primaryBlue} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/perfil')} accessibilityLabel="Abrir perfil">
+                <Ionicons name="person-circle-outline" size={28} color={COLORS.primaryBlue} />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
