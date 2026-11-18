@@ -362,6 +362,18 @@ export default function NovaOcorrencia() {
             {fotoUri ? (
               <View>
                 <Image source={{ uri: fotoUri }} style={styles.preview} resizeMode="cover" />
+                <View style={[styles.fotoBotoes, { marginTop: 10 }]}>
+                  {!isWeb && (
+                    <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={tirarFoto}>
+                      <Ionicons name="camera-outline" size={18} color={COLORS.primaryBlue} />
+                      <Text style={styles.botaoSecundarioTexto}>Tirar outra</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={escolherDaGaleria}>
+                    <Ionicons name="swap-horizontal-outline" size={18} color={COLORS.primaryBlue} />
+                    <Text style={styles.botaoSecundarioTexto}>{isWeb ? 'Trocar foto' : 'Trocar da galeria'}</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity style={styles.removerFoto} activeOpacity={0.7} onPress={() => { setFotoUri(null); setFotoBase64(null); }}>
                   <Ionicons name="trash-outline" size={16} color={COLORS.error} />
                   <Text style={styles.removerFotoTexto}>Remover foto</Text>
@@ -403,6 +415,10 @@ export default function NovaOcorrencia() {
                 <Text style={styles.linkTexto}>{coords ? 'Atualizar' : 'Tentar de novo'}</Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={styles.avisoLocal}>
+              A localização registrada é a sua posição atual, não o local onde a foto foi tirada. Se estiver longe do problema, vá até lá antes de registrar.
+            </Text>
 
             {modoManual && !coords && (
               <View style={styles.manualBox}>
@@ -527,6 +543,7 @@ const styles = StyleSheet.create({
   },
   botaoSecundarioTexto: { color: COLORS.primaryBlue, fontSize: 14, fontWeight: '700' },
   preview: { width: '100%', height: 200, borderRadius: 10, backgroundColor: COLORS.inputBackground },
+  avisoLocal: { fontSize: 12, lineHeight: 17, color: COLORS.textSecondary, marginTop: 8 },
   removerFoto: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 8 },
   removerFotoTexto: { color: COLORS.error, fontSize: 13, fontWeight: '600' },
   localBox: {
