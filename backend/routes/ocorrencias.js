@@ -103,15 +103,16 @@ router.post('/', autenticar, async (req, res) => {
 // GET /ocorrencias
 // Lista as ocorrências, da mais recente para a mais antiga.
 // ?minhas=true retorna só as do usuário autenticado.
+// Ocorrências canceladas pelo autor não aparecem em nenhuma listagem.
 router.get('/', autenticar, async (req, res) => {
   const apenasMinhas = req.query.minhas === 'true';
 
   const valores = [];
-  let filtro = '';
+  const condicoes = ["o.status <> 'CANCELADA'"];
 
   if (apenasMinhas) {
     valores.push(req.usuarioId);
-    filtro = 'WHERE o.usuario_id = $1';
+    condicoes.push(`o.usuario_id = $${valores.length}`);
   }
 
   try {
@@ -123,12 +124,60 @@ router.get('/', autenticar, async (req, res) => {
               o.status, o.criado_em
        FROM ocorrencias o
        JOIN categorias c ON c.id = o.categoria_id
-       ${filtro}
+       WHERE ${condicoes.join(' AND ')}
        ORDER BY o.criado_em DESC, o.id DESC`,
       valores
     );
 
     return res.status(200).json(result.rows);
+  } catch (erro) {
+    console.error(erro);
+
+    return res.status(500).json({
+      erro: 'erro interno do servidor'
+    });
+  }
+});
+
+// DELETE /ocorrencias/:id
+// Cancela uma ocorrência do próprio usuário. Não apaga o registro: muda o status para
+// CANCELADA (ela some das listagens, mas o histórico fica no banco).
+// Só é permitido enquanto o status for ABERTA, ou seja, antes de qualquer validação.
+router.delete('/:id', autenticar, async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ erro: 'id inválido' });
+  }
+
+  try {
+    const existente = await pool.query(
+      'SELECT usuario_id, status FROM ocorrencias WHERE id = $1',
+      [id]
+    );
+
+    if (existente.rowCount === 0 || existente.rows[0].status === 'CANCELADA') {
+      return res.status(404).json({ erro: 'ocorrência não encontrada' });
+    }
+
+    const ocorrencia = existente.rows[0];
+
+    if (Number(ocorrencia.usuario_id) !== Number(req.usuarioId)) {
+      return res.status(403).json({ erro: 'você só pode cancelar as suas próprias ocorrências' });
+    }
+
+    if (ocorrencia.status !== 'ABERTA') {
+      return res.status(409).json({
+        erro: 'só é possível cancelar ocorrências que ainda estão abertas'
+      });
+    }
+
+    await pool.query(
+      "UPDATE ocorrencias SET status = 'CANCELADA', atualizado_em = CURRENT_TIMESTAMP WHERE id = $1 AND status = 'ABERTA'",
+      [id]
+    );
+
+    return res.status(200).json({ id, status: 'CANCELADA' });
   } catch (erro) {
     console.error(erro);
 

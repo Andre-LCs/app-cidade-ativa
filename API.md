@@ -275,6 +275,44 @@ Authorization: Bearer <token>
 
 ---
 
+## DELETE /ocorrencias/:id
+
+Cancela uma ocorrência do próprio usuário. O registro não é apagado: o status passa a `CANCELADA` e a ocorrência deixa de aparecer em `GET /ocorrencias` (lista e mapa).
+
+**Header obrigatório:**
+```
+Authorization: Bearer <token>
+```
+
+**Retorna 200 (sucesso):**
+```json
+{ "id": 1, "status": "CANCELADA" }
+```
+
+**Retorna 400 (id inválido):**
+```json
+{ "erro": "id inválido" }
+```
+
+**Retorna 403 (ocorrência de outro usuário):**
+```json
+{ "erro": "você só pode cancelar as suas próprias ocorrências" }
+```
+
+**Retorna 404 (não existe ou já cancelada):**
+```json
+{ "erro": "ocorrência não encontrada" }
+```
+
+**Retorna 409 (já passou de "Aberta"):**
+```json
+{ "erro": "só é possível cancelar ocorrências que ainda estão abertas" }
+```
+
+Regra: o autor só cancela enquanto o status for `ABERTA`. Depois disso (validação, envio ao órgão, etc.) a ocorrência deixa de ser só dele.
+
+---
+
 ## Padrão de erros
 
 Toda resposta de erro segue o mesmo formato:
@@ -285,8 +323,11 @@ Toda resposta de erro segue o mesmo formato:
 ## Códigos HTTP usados
 | Código | Significado |
 |---|---|
-| 200 | Sucesso (login, consulta, listagem, atualização) |
+| 200 | Sucesso (login, consulta, listagem, atualização, cancelamento) |
 | 201 | Sucesso (criação de recurso — cadastro e ocorrência) |
 | 400 | Erro do cliente (dado inválido/faltando) |
+| 403 | Sem permissão (ex.: cancelar ocorrência de outro usuário) |
+| 404 | Recurso não encontrado |
+| 409 | Conflito de estado (ex.: cancelar ocorrência que já não está aberta) |
 | 401 | Não autenticado (token ausente/inválido, ou credenciais erradas) |
 | 500 | Erro interno do servidor |

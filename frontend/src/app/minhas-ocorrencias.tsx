@@ -2,7 +2,9 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Alert,
   Image,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -117,6 +119,40 @@ export default function MinhasOcorrencias() {
     carregar();
   };
 
+  const cancelar = async (item: Ocorrencia) => {
+    setErro(null);
+    const token = await tokenStorage.getItem('token');
+    if (!token) {
+      router.replace('/login');
+      return;
+    }
+
+    try {
+      await apiRequest(`/ocorrencias/${item.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setItens((atual) => atual.filter((o) => o.id !== item.id));
+    } catch (error: any) {
+      setErro(error.message || 'Não foi possível cancelar a ocorrência.');
+      carregar();
+    }
+  };
+
+  const confirmarCancelamento = (item: Ocorrencia) => {
+    const mensagem = 'A ocorrência deixará de aparecer na lista e no mapa. Esta ação não pode ser desfeita.';
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Cancelar esta ocorrência?\n\n${mensagem}`)) cancelar(item);
+      return;
+    }
+
+    Alert.alert('Cancelar esta ocorrência?', mensagem, [
+      { text: 'Voltar', style: 'cancel' },
+      { text: 'Cancelar ocorrência', style: 'destructive', onPress: () => cancelar(item) },
+    ]);
+  };
+
   const renderItem = ({ item }: { item: Ocorrencia }) => {
     const st = STATUS[item.status] ?? { label: item.status, cor: COLORS.textSecondary, fundo: COLORS.inputBackground };
 
@@ -139,6 +175,17 @@ export default function MinhasOcorrencias() {
             </View>
             <Text style={styles.cardData}>{formatarData(item.criado_em)}</Text>
           </View>
+          {item.status === 'ABERTA' && (
+            <TouchableOpacity
+              style={styles.cancelar}
+              activeOpacity={0.7}
+              onPress={() => confirmarCancelamento(item)}
+              accessibilityLabel="Cancelar ocorrência"
+            >
+              <Ionicons name="close-circle-outline" size={15} color={COLORS.error} />
+              <Text style={styles.cancelarTexto}>Cancelar ocorrência</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
@@ -250,6 +297,8 @@ const styles = StyleSheet.create({
   badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 1 },
   badgeTexto: { fontSize: 11, fontWeight: '700' },
   cardData: { fontSize: 11, color: COLORS.placeholder, marginLeft: 8 },
+  cancelar: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', marginTop: 8 },
+  cancelarTexto: { color: COLORS.error, fontSize: 12, fontWeight: '600' },
   vazio: { alignItems: 'center', paddingHorizontal: 32, paddingTop: 64 },
   vazioTitulo: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: 12 },
   vazioTexto: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', marginTop: 6 },
