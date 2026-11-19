@@ -10,9 +10,6 @@ import * as tokenStorage from '../services/tokenStorage';
 const COLORS = {
   primaryBlue: '#1F3F77',
   background: '#F8FAFC',
-  border: '#E2E8F0',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
   white: '#FFFFFF',
   error: '#DC2626',
   errorBackground: '#FEF2F2',
@@ -23,21 +20,12 @@ type Ocorrencia = {
   id: number;
   categoria_nome: string;
   titulo: string;
+  descricao: string | null;
+  foto_url: string | null;
   status: string;
+  criado_em: string;
   latitude: number | string;
   longitude: number | string;
-};
-
-// Cor do marcador por status (mesma lógica de cores da lista)
-const COR_STATUS: Record<string, string> = {
-  ABERTA: '#1F3F77',
-  EM_VALIDACAO: '#B45309',
-  VALIDADA: '#15803D',
-  ENVIADA_PREFEITURA: '#1F3F77',
-  EM_ATENDIMENTO: '#B45309',
-  RESOLVIDA: '#15803D',
-  EXPIRADA: '#64748B',
-  DUPLICADA: '#64748B',
 };
 
 const ROTULO_STATUS: Record<string, string> = {
@@ -51,51 +39,217 @@ const ROTULO_STATUS: Record<string, string> = {
   DUPLICADA: 'Duplicada',
 };
 
-// Monta a página do mapa (Leaflet + OpenStreetMap, sem chave de API).
-// Os dados vão como JSON e os textos entram no popup via textContent (sem HTML injetado).
-function montarHtml(pontos: Ocorrencia[]) {
+// Página do mapa: Leaflet + OpenStreetMap suavizado por filtro CSS, sem chave de API.
+// Pinos por categoria (cor + ícone), agrupamento de pontos próximos, filtros por categoria
+// e cartão de detalhes na parte de baixo. Os textos entram via textContent (sem HTML injetado).
+// Observação: não usar crases nem ${} dentro desta string.
+const PAGINA = `<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<style>
+  html,body,#mapa{height:100%;margin:0;font-family:-apple-system,Roboto,Helvetica,Arial,sans-serif}
+  .leaflet-control-attribution{font-size:9px}
+  .leaflet-tile-pane{filter:saturate(.55) contrast(.95) brightness(1.05)}
+  .leaflet-top.leaflet-left{top:52px}
+  .pin-wrap{background:none;border:0}
+  .pin{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid #fff;
+       box-shadow:0 2px 6px rgba(15,23,42,.35);display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+  .pin svg{transform:rotate(45deg);width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .cl-wrap{background:none;border:0}
+  .cl{width:40px;height:40px;border-radius:50%;background:#1F3F77;color:#fff;border:3px solid #fff;
+      box-shadow:0 2px 8px rgba(15,23,42,.4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-sizing:border-box}
+  #barra{position:absolute;top:8px;left:8px;right:8px;z-index:1000;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;padding-bottom:4px}
+  #barra::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:#fff;color:#0F172A;border:0;border-radius:18px;
+        padding:7px 12px;font-size:12px;font-weight:600;box-shadow:0 1px 4px rgba(15,23,42,.25)}
+  .chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .chip.off{opacity:.45}
+  #total{background:#1F3F77;color:#fff;box-shadow:0 1px 4px rgba(15,23,42,.35)}
+  #card{position:absolute;left:0;right:0;bottom:0;z-index:1100;background:#1F3F77;color:#fff;border-radius:18px 18px 0 0;
+        padding:16px 16px calc(16px + var(--safe,0px));transform:translateY(105%);transition:transform .2s ease;box-shadow:0 -4px 16px rgba(15,23,42,.3)}
+  #card.on{transform:translateY(0)}
+  #corpo{display:flex;flex-direction:column;gap:10px}
+  #fotoBox{position:relative;display:none}
+  #foto{width:100%;height:170px;border-radius:12px;object-fit:cover;background:#14284F;display:block}
+  #ampliar{position:absolute;right:8px;bottom:8px;background:rgba(15,23,42,.7);color:#fff;font-size:11px;font-weight:600;border-radius:12px;padding:4px 9px}
+  #lb{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center}
+  #lb.on{display:flex}
+  #lb img{max-width:100%;max-height:100%;object-fit:contain}
+  #lbx{position:absolute;top:14px;right:16px;color:#fff;font-size:30px;line-height:1;background:none;border:0}
+  #info{flex:1;min-width:0}
+  #cat{font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;opacity:.95}
+  #cat i{width:10px;height:10px;border-radius:50%;display:inline-block;border:1.5px solid #fff}
+  #tit{font-size:17px;font-weight:700;margin:4px 0 2px;overflow-wrap:anywhere}
+  #desc{font-size:13px;opacity:.85;margin:0 0 8px;overflow-wrap:anywhere;display:none}
+  #meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px}
+  #st{border-radius:10px;padding:3px 9px;font-weight:700;color:#fff}
+  #x{position:absolute;top:8px;right:12px;background:none;border:0;color:#fff;font-size:22px;line-height:1;padding:4px 8px}
+</style>
+</head><body>
+<div id="mapa"></div>
+<div id="barra"></div>
+<div id="card">
+  <button id="x" aria-label="Fechar">&times;</button>
+  <div id="corpo">
+    <div id="fotoBox"><img id="foto" alt=""/><span id="ampliar">Toque para ampliar</span></div>
+    <div id="info">
+      <div id="cat"><i></i><span></span></div>
+      <div id="tit"></div>
+      <p id="desc"></p>
+      <div id="meta"><span id="st"></span><span id="dias"></span></div>
+    </div>
+  </div>
+</div>
+<div id="lb"><button id="lbx" aria-label="Fechar">&times;</button><img id="lbimg" alt=""/></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+var DADOS = __DADOS__;
+document.documentElement.style.setProperty('--safe', '__SAFE__px');
+
+var CATS = [
+  { k: 'buraco',   nome: 'Buraco',      cor: '#D9480F', svg: '<ellipse cx="12" cy="13" rx="8" ry="5"/><ellipse cx="12" cy="13" rx="3.5" ry="2"/>' },
+  { k: 'ilumin',   nome: 'Iluminação',  cor: '#E8A100', svg: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
+  { k: 'lixo',     nome: 'Lixo',        cor: '#17A398', svg: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/>' },
+  { k: 'cal',      nome: 'Calçada',     cor: '#0B74C4', svg: '<path d="M4 6h16v12H4zM12 6l-2 4 3 2-2 6"/>' },
+  { k: 'veic',     nome: 'Veículo',     cor: '#7B61C9', svg: '<path d="M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>' }
+];
+var PADRAO = { k: 'outro', nome: 'Outros', cor: '#1F3F77', svg: '<circle cx="12" cy="12" r="4"/>' };
+
+function norm(t) { return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+function categoriaDe(nome) {
+  var n = norm(nome);
+  if (n.indexOf('buraco') >= 0) return CATS[0];
+  if (n.indexOf('ilumin') >= 0) return CATS[1];
+  if (n.indexOf('lixo') >= 0 || n.indexOf('entulho') >= 0) return CATS[2];
+  if (n.indexOf('calcada') >= 0) return CATS[3];
+  if (n.indexOf('veiculo') >= 0) return CATS[4];
+  return PADRAO;
+}
+function corDoStatus(o, cat) {
+  if (o.status === 'RESOLVIDA') return '#32A041';
+  if (o.status === 'EXPIRADA' || o.status === 'DUPLICADA') return '#94A3B8';
+  return cat.cor;
+}
+var COR_STATUS = { RESOLVIDA: '#32A041', EXPIRADA: '#64748B', DUPLICADA: '#64748B', EM_ATENDIMENTO: '#E8A100', EM_VALIDACAO: '#E8A100' };
+
+var mapa = L.map('mapa', { zoomControl: true }).setView([-15.7801, -47.9292], 12);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, keepBuffer: 4,
+  attribution: '&copy; OpenStreetMap'
+}).addTo(mapa);
+
+var grupo = L.markerClusterGroup({
+  showCoverageOnHover: false, maxClusterRadius: 50,
+  iconCreateFunction: function (c) {
+    return L.divIcon({ html: '<div class="cl">' + c.getChildCount() + '</div>', className: 'cl-wrap', iconSize: [40, 40] });
+  }
+});
+mapa.addLayer(grupo);
+
+var card = document.getElementById('card');
+var fotoAtual = null;
+var lb = document.getElementById('lb');
+document.getElementById('fotoBox').onclick = function () {
+  if (!fotoAtual) return;
+  document.getElementById('lbimg').src = fotoAtual;
+  lb.classList.add('on');
+};
+lb.onclick = function () { lb.classList.remove('on'); };
+function fecharCard() { card.classList.remove('on'); }
+document.getElementById('x').onclick = fecharCard;
+mapa.on('click', fecharCard);
+
+function abrirCard(o, cat) {
+  document.querySelector('#cat span').textContent = cat.nome === 'Outros' ? o.categoria : o.categoria;
+  document.querySelector('#cat i').style.background = cat.cor;
+  document.getElementById('tit').textContent = o.titulo;
+  var d = document.getElementById('desc');
+  if (o.descricao) { d.textContent = o.descricao; d.style.display = 'block'; } else { d.style.display = 'none'; }
+  var f = document.getElementById('foto');
+  var box = document.getElementById('fotoBox');
+  if (o.foto && o.foto.indexOf('https://res.cloudinary.com/') === 0) {
+    f.src = o.foto.replace('/upload/', '/upload/w_800,h_400,c_fill,q_auto,f_auto/');
+    box.style.display = 'block';
+    fotoAtual = o.foto.replace('/upload/', '/upload/w_1600,c_limit,q_auto,f_auto/');
+  } else { f.removeAttribute('src'); box.style.display = 'none'; fotoAtual = null; }
+  var st = document.getElementById('st');
+  st.textContent = o.statusRotulo;
+  st.style.background = COR_STATUS[o.status] || '#0B74C4';
+  var dias = Math.max(0, Math.floor((Date.now() - new Date(o.criado).getTime()) / 86400000));
+  var aberta = o.status !== 'RESOLVIDA' && o.status !== 'EXPIRADA' && o.status !== 'DUPLICADA';
+  document.getElementById('dias').textContent = aberta
+    ? (dias === 0 ? 'Registrada hoje' : 'Aberta há ' + dias + (dias === 1 ? ' dia' : ' dias'))
+    : 'Registrada em ' + new Date(o.criado).toLocaleDateString('pt-BR');
+  card.classList.add('on');
+}
+
+var itens = [];
+DADOS.forEach(function (o) {
+  if (isNaN(o.lat) || isNaN(o.lon)) return;
+  var cat = categoriaDe(o.categoria);
+  var icone = L.divIcon({
+    html: '<div class="pin" style="background:' + corDoStatus(o, cat) + '"><svg viewBox="0 0 24 24">' + cat.svg + '</svg></div>',
+    className: 'pin-wrap', iconSize: [34, 34], iconAnchor: [17, 42]
+  });
+  var m = L.marker([o.lat, o.lon], { icon: icone });
+  m.on('click', function (e) { L.DomEvent.stopPropagation(e); abrirCard(o, cat); });
+  itens.push({ m: m, k: cat.k });
+});
+
+var ativos = {};
+CATS.concat([PADRAO]).forEach(function (c) { ativos[c.k] = true; });
+var total = document.createElement('div');
+total.id = 'total'; total.className = 'chip';
+var barra = document.getElementById('barra');
+barra.appendChild(total);
+
+function desenhar(ajustar) {
+  grupo.clearLayers();
+  var vis = itens.filter(function (i) { return ativos[i.k]; });
+  grupo.addLayers(vis.map(function (i) { return i.m; }));
+  total.textContent = vis.length === 1 ? '1 ocorrência' : vis.length + ' ocorrências';
+  if (ajustar && vis.length) {
+    var pts = vis.map(function (i) { return i.m.getLatLng(); });
+    if (pts.length === 1) mapa.setView(pts[0], 16);
+    else mapa.fitBounds(L.latLngBounds(pts), { padding: [60, 60], maxZoom: 16 });
+  }
+}
+
+CATS.forEach(function (c) {
+  var b = document.createElement('button');
+  b.className = 'chip';
+  var dot = document.createElement('i'); dot.style.background = c.cor;
+  b.appendChild(dot); b.appendChild(document.createTextNode(c.nome));
+  b.onclick = function () {
+    ativos[c.k] = !ativos[c.k];
+    b.classList.toggle('off', !ativos[c.k]);
+    fecharCard(); desenhar(false);
+  };
+  barra.appendChild(b);
+});
+
+desenhar(true);
+</script></body></html>`;
+
+function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
   const dados = pontos.map((o) => ({
     lat: Number(o.latitude),
     lon: Number(o.longitude),
     titulo: o.titulo,
+    descricao: o.descricao,
+    foto: o.foto_url,
     categoria: o.categoria_nome,
-    status: ROTULO_STATUS[o.status] ?? o.status,
-    cor: COR_STATUS[o.status] ?? '#1F3F77',
+    status: o.status,
+    statusRotulo: ROTULO_STATUS[o.status] ?? o.status,
+    criado: o.criado_em,
   }));
   const json = JSON.stringify(dados).replace(/</g, '\\u003c');
 
-  return `<!DOCTYPE html>
-<html><head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>html,body,#mapa{height:100%;margin:0}body{font-family:sans-serif}.p b{display:block;margin-bottom:2px}.p span{color:#64748B;font-size:12px}</style>
-</head><body><div id="mapa"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-var dados = ${json};
-var mapa = L.map('mapa').setView([-15.7801, -47.9292], 12);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '&copy; OpenStreetMap'
-}).addTo(mapa);
-var limites = [];
-dados.forEach(function (o) {
-  if (isNaN(o.lat) || isNaN(o.lon)) return;
-  var m = L.circleMarker([o.lat, o.lon], {
-    radius: 10, color: '#FFFFFF', weight: 2, fillColor: o.cor, fillOpacity: 0.95
-  }).addTo(mapa);
-  var div = document.createElement('div');
-  div.className = 'p';
-  var t = document.createElement('b'); t.textContent = o.titulo;
-  var c = document.createElement('span'); c.textContent = o.categoria + ' • ' + o.status;
-  div.appendChild(t); div.appendChild(c);
-  m.bindPopup(div);
-  limites.push([o.lat, o.lon]);
-});
-if (limites.length === 1) mapa.setView(limites[0], 16);
-else if (limites.length > 1) mapa.fitBounds(limites, { padding: [40, 40], maxZoom: 16 });
-</script></body></html>`;
+  return PAGINA.replace('__DADOS__', () => json).replace('__SAFE__', () => String(Math.round(margemInferior)));
 }
 
 export default function Mapa() {
@@ -127,11 +281,18 @@ export default function Mapa() {
     }, [carregar])
   );
 
-  const html = useMemo(() => montarHtml(itens), [itens]);
+  const html = useMemo(() => montarHtml(itens, insets.bottom), [itens, insets.bottom]);
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Mapa de ocorrências' }} />
+      <Stack.Screen
+        options={{
+          title: 'Mapa de ocorrências',
+          headerStyle: { backgroundColor: COLORS.primaryBlue },
+          headerTintColor: COLORS.white,
+          headerTitleStyle: { fontWeight: '700' },
+        }}
+      />
 
       {erro && (
         <View style={styles.banner}>
@@ -162,14 +323,6 @@ export default function Mapa() {
           startInLoadingState
         />
       )}
-
-      {!carregando && !erro && (
-        <View style={[styles.contador, { bottom: 16 + insets.bottom }]}>
-          <Text style={styles.contadorTexto}>
-            {itens.length === 1 ? '1 ocorrência no mapa' : `${itens.length} ocorrências no mapa`}
-          </Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -189,16 +342,4 @@ const styles = StyleSheet.create({
   },
   bannerTexto: { flex: 1, color: COLORS.error, fontSize: 13 },
   link: { color: COLORS.primaryBlue, fontWeight: '700', fontSize: 13 },
-  contador: {
-    position: 'absolute',
-    bottom: 16,
-    alignSelf: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-  },
-  contadorTexto: { color: COLORS.textPrimary, fontSize: 12, fontWeight: '600' },
 });
