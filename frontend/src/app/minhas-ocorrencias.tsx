@@ -41,6 +41,8 @@ type Ocorrencia = {
   foto_url: string | null;
   status: string;
   criado_em: string;
+  confirmacoes?: number;
+  votos_resolvida?: number;
 };
 
 const STATUS: Record<string, { label: string; cor: string; fundo: string }> = {
@@ -168,14 +170,19 @@ export default function MinhasOcorrencias() {
 
         <View style={styles.cardInfo}>
           <Text style={styles.cardTitulo} numberOfLines={2}>{item.titulo}</Text>
-          <Text style={styles.cardCategoria}>{item.categoria_nome}</Text>
+          <Text style={styles.cardCategoria}>
+            {item.categoria_nome}
+            {(item.confirmacoes ?? 0) > 0
+              ? ` • ${item.confirmacoes} ${item.confirmacoes === 1 ? 'confirmação' : 'confirmações'}`
+              : ''}
+          </Text>
           <View style={styles.cardRodape}>
             <View style={[styles.badge, { backgroundColor: st.fundo }]}>
               <Text style={[styles.badgeTexto, { color: st.cor }]}>{st.label}</Text>
             </View>
             <Text style={styles.cardData}>{formatarData(item.criado_em)}</Text>
           </View>
-          {item.status === 'ABERTA' && (
+          {item.status === 'ABERTA' && (item.votos_resolvida ?? 0) === 0 && (
             <TouchableOpacity
               style={styles.cancelar}
               activeOpacity={0.7}

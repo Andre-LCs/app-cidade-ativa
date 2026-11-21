@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router, useFocusEffect } from 'expo-router';
@@ -16,8 +16,16 @@ const COLORS = {
   errorBorder: '#FECACA',
 };
 
+// Limites da validação pela comunidade. Mantenha iguais aos do back-end (routes/ocorrencias.js).
+const LIMITE_VALIDACAO = 3;
+const LIMITE_RESOLVIDA = 2;
+
 type Ocorrencia = {
   id: number;
+  minha: boolean;
+  confirmacoes: number;
+  votos_resolvida: number;
+  meu_voto: string | null;
   categoria_nome: string;
   titulo: string;
   descricao: string | null;
@@ -85,6 +93,13 @@ const PAGINA = `<!DOCTYPE html>
   #tit{font-size:17px;font-weight:700;margin:4px 0 2px;overflow-wrap:anywhere}
   #desc{font-size:13px;opacity:.85;margin:0 0 8px;overflow-wrap:anywhere;display:none}
   #meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px}
+  #votos{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2)}
+  #prog{font-size:12px;opacity:.9;margin-bottom:8px}
+  #botoes{display:flex;gap:8px}
+  #botoes.ocupado{opacity:.55;pointer-events:none}
+  #botoes button{flex:1;border:1.5px solid #fff;background:transparent;color:#fff;border-radius:10px;padding:10px 6px;font-size:13px;font-weight:700}
+  #botoes button.sel{background:#fff;color:#1F3F77}
+  #msg{font-size:12px;color:#FECACA;margin-top:6px}
   #st{border-radius:10px;padding:3px 9px;font-weight:700;color:#fff}
   #x{position:absolute;top:8px;right:12px;background:none;border:0;color:#fff;font-size:22px;line-height:1;padding:4px 8px}
 </style>
@@ -100,6 +115,14 @@ const PAGINA = `<!DOCTYPE html>
       <div id="tit"></div>
       <p id="desc"></p>
       <div id="meta"><span id="st"></span><span id="dias"></span></div>
+    </div>
+    <div id="votos">
+      <div id="prog"></div>
+      <div id="botoes">
+        <button id="bAinda" type="button"></button>
+        <button id="bRes" type="button"></button>
+      </div>
+      <div id="msg"></div>
     </div>
   </div>
 </div>
@@ -163,7 +186,77 @@ function fecharCard() { card.classList.remove('on'); }
 document.getElementById('x').onclick = fecharCard;
 mapa.on('click', fecharCard);
 
+var LIM_VAL = __LIM_VAL__, LIM_RES = __LIM_RES__;
+var atual = null, enviando = false, porId = {};
+
+function enviar(obj) {
+  var t = JSON.stringify(obj);
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(t);
+  else window.parent.postMessage(t, '*');
+}
+function ocupado(sim) {
+  enviando = sim;
+  document.getElementById('botoes').classList.toggle('ocupado', sim);
+}
+function desenharVotos() {
+  if (!atual) return;
+  var o = atual.o;
+  var encerrada = o.status === 'RESOLVIDA';
+  var bA = document.getElementById('bAinda'), bR = document.getElementById('bRes');
+  document.getElementById('botoes').style.display = encerrada ? 'none' : 'flex';
+  bA.style.display = o.minha ? 'none' : 'block';
+  bA.textContent = 'Ainda está lá (' + o.confirmacoes + ')';
+  bR.textContent = o.minha ? 'Marcar como resolvida' : 'Já foi resolvido (' + o.votosRes + ')';
+  bA.classList.toggle('sel', o.meuVoto === 'AINDA_EXISTE');
+  bR.classList.toggle('sel', o.meuVoto === 'RESOLVIDA');
+  var t;
+  if (encerrada) t = 'Resolvida';
+  else if (o.status === 'VALIDADA') t = 'Validada pela comunidade (' + o.confirmacoes + ' confirmações)';
+  else t = o.confirmacoes + ' de ' + LIM_VAL + ' confirmações para validar';
+  if (!encerrada && o.votosRes > 0) t += ' • ' + o.votosRes + ' de ' + LIM_RES + ' votos de resolvido';
+  document.getElementById('prog').textContent = t;
+  document.getElementById('msg').textContent = '';
+}
+function votar(tipo) {
+  if (!atual || enviando) return;
+  ocupado(true);
+  document.getElementById('msg').textContent = '';
+  enviar({ tipo: 'votar', id: atual.o.id, voto: tipo });
+}
+document.getElementById('bAinda').onclick = function () { votar('AINDA_EXISTE'); };
+document.getElementById('bRes').onclick = function () { votar('RESOLVIDA'); };
+
+window.atualizarOcorrencia = function (r) {
+  ocupado(false);
+  var it = porId[r.id];
+  if (!it) return;
+  var o = it.o;
+  o.status = r.status; o.statusRotulo = r.statusRotulo;
+  o.confirmacoes = r.confirmacoes; o.votosRes = r.votos_resolvida; o.meuVoto = r.meu_voto;
+  it.m.setIcon(iconePara(o, it.cat));
+  if (atual && atual.o.id === o.id) abrirCard(o, it.cat);
+};
+window.mostrarErro = function (m) {
+  ocupado(false);
+  document.getElementById('msg').textContent = m;
+};
+window.addEventListener('message', function (e) {
+  try {
+    var m = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+    if (m && m.tipo === 'atualizar') window.atualizarOcorrencia(m.dados);
+    else if (m && m.tipo === 'erro') window.mostrarErro(m.msg);
+  } catch (_) {}
+});
+
+function iconePara(o, cat) {
+  return L.divIcon({
+    html: '<div class="pin" style="background:' + corDoStatus(o, cat) + '"><svg viewBox="0 0 24 24">' + cat.svg + '</svg></div>',
+    className: 'pin-wrap', iconSize: [34, 34], iconAnchor: [17, 42]
+  });
+}
+
 function abrirCard(o, cat) {
+  atual = { o: o, cat: cat };
   document.querySelector('#cat span').textContent = cat.nome === 'Outros' ? o.categoria : o.categoria;
   document.querySelector('#cat i').style.background = cat.cor;
   document.getElementById('tit').textContent = o.titulo;
@@ -184,6 +277,7 @@ function abrirCard(o, cat) {
   document.getElementById('dias').textContent = aberta
     ? (dias === 0 ? 'Registrada hoje' : 'Aberta há ' + dias + (dias === 1 ? ' dia' : ' dias'))
     : 'Registrada em ' + new Date(o.criado).toLocaleDateString('pt-BR');
+  desenharVotos();
   card.classList.add('on');
 }
 
@@ -191,12 +285,9 @@ var itens = [];
 DADOS.forEach(function (o) {
   if (isNaN(o.lat) || isNaN(o.lon)) return;
   var cat = categoriaDe(o.categoria);
-  var icone = L.divIcon({
-    html: '<div class="pin" style="background:' + corDoStatus(o, cat) + '"><svg viewBox="0 0 24 24">' + cat.svg + '</svg></div>',
-    className: 'pin-wrap', iconSize: [34, 34], iconAnchor: [17, 42]
-  });
-  var m = L.marker([o.lat, o.lon], { icon: icone });
+  var m = L.marker([o.lat, o.lon], { icon: iconePara(o, cat) });
   m.on('click', function (e) { L.DomEvent.stopPropagation(e); abrirCard(o, cat); });
+  porId[o.id] = { o: o, m: m, cat: cat };
   itens.push({ m: m, k: cat.k });
 });
 
@@ -236,7 +327,14 @@ desenhar(true);
 </script></body></html>`;
 
 function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
-  const dados = pontos.map((o) => ({
+  const dados = pontos
+    .filter((o) => o.status !== 'EXPIRADA' && o.status !== 'DUPLICADA')
+    .map((o) => ({
+    id: o.id,
+    minha: o.minha,
+    confirmacoes: o.confirmacoes ?? 0,
+    votosRes: o.votos_resolvida ?? 0,
+    meuVoto: o.meu_voto,
     lat: Number(o.latitude),
     lon: Number(o.longitude),
     titulo: o.titulo,
@@ -249,12 +347,19 @@ function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
   }));
   const json = JSON.stringify(dados).replace(/</g, '\\u003c');
 
-  return PAGINA.replace('__DADOS__', () => json).replace('__SAFE__', () => String(Math.round(margemInferior)));
+  return PAGINA.replace('__DADOS__', () => json)
+    .replace('__SAFE__', () => String(Math.round(margemInferior)))
+    .replace('__LIM_VAL__', () => String(LIMITE_VALIDACAO))
+    .replace('__LIM_RES__', () => String(LIMITE_RESOLVIDA));
 }
 
 export default function Mapa() {
   const insets = useSafeAreaInsets();
-  const [itens, setItens] = useState<Ocorrencia[]>([]);
+  const [html, setHtml] = useState('');
+  const insetRef = useRef(0);
+  insetRef.current = insets.bottom;
+  const webViewRef = useRef<WebView>(null);
+  const iframeRef = useRef<any>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -267,7 +372,7 @@ export default function Mapa() {
     }
     try {
       const dados = await apiRequest('/ocorrencias', { headers: { Authorization: `Bearer ${token}` } });
-      setItens(dados);
+      setHtml(montarHtml(dados, insetRef.current));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível carregar as ocorrências.');
     } finally {
@@ -281,7 +386,57 @@ export default function Mapa() {
     }, [carregar])
   );
 
-  const html = useMemo(() => montarHtml(itens, insets.bottom), [itens, insets.bottom]);
+  const responder = useCallback((msg: { tipo: 'atualizar'; dados: any } | { tipo: 'erro'; msg: string }) => {
+    if (Platform.OS === 'web') {
+      iframeRef.current?.contentWindow?.postMessage(JSON.stringify(msg), '*');
+      return;
+    }
+    const chamada = msg.tipo === 'atualizar'
+      ? `window.atualizarOcorrencia(${JSON.stringify(msg.dados)});`
+      : `window.mostrarErro(${JSON.stringify(msg.msg)});`;
+    webViewRef.current?.injectJavaScript(`${chamada} true;`);
+  }, []);
+
+  // A página do mapa pede o voto; o token fica aqui no app, nunca dentro da página.
+  const processarMensagem = useCallback(
+    async (texto: string) => {
+      let m: any;
+      try {
+        m = JSON.parse(texto);
+      } catch {
+        return;
+      }
+      if (m?.tipo !== 'votar') return;
+
+      const token = await tokenStorage.getItem('token');
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+
+      try {
+        const r = await apiRequest(`/ocorrencias/${Number(m.id)}/confirmacoes`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ tipo: m.voto }),
+        });
+        responder({ tipo: 'atualizar', dados: { ...r, statusRotulo: ROTULO_STATUS[r.status] ?? r.status } });
+      } catch (e) {
+        responder({ tipo: 'erro', msg: e instanceof Error ? e.message : 'Não foi possível registrar o voto.' });
+      }
+    },
+    [responder]
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const aoReceber = (e: MessageEvent) => {
+      if (e.source !== iframeRef.current?.contentWindow) return;
+      if (typeof e.data === 'string') processarMensagem(e.data);
+    };
+    window.addEventListener('message', aoReceber);
+    return () => window.removeEventListener('message', aoReceber);
+  }, [processarMensagem]);
 
   return (
     <View style={styles.container}>
@@ -310,6 +465,7 @@ export default function Mapa() {
         </View>
       ) : Platform.OS === 'web' ? (
         React.createElement('iframe', {
+          ref: iframeRef,
           srcDoc: html,
           style: { flex: 1, width: '100%', height: '100%', border: 0 },
           title: 'Mapa de ocorrências',
@@ -317,7 +473,9 @@ export default function Mapa() {
       ) : (
         <WebView
           originWhitelist={['*']}
+          ref={webViewRef}
           source={{ html }}
+          onMessage={(e) => processarMensagem(e.nativeEvent.data)}
           style={styles.mapa}
           javaScriptEnabled
           startInLoadingState

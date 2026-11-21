@@ -249,6 +249,8 @@ Authorization: Bearer <token>
 
 **Parâmetro opcional (query):** `?minhas=true` retorna só as ocorrências do usuário autenticado (usado na tela "Minhas Ocorrências"). Sem o parâmetro, retorna todas.
 
+**Campos de validação:** `minha` (true se a ocorrência é do usuário autenticado), `confirmacoes` (votos "ainda está lá"), `votos_resolvida` (votos "já foi resolvido") e `meu_voto` (`AINDA_EXISTE`, `RESOLVIDA` ou `null`). Ocorrências com prazo de expiração (ex.: veículo em local proibido) passam a `EXPIRADA` ao serem listadas, se ficarem sem atividade além do prazo.
+
 **Retorna 200 (sucesso):**
 ```json
 [
@@ -263,7 +265,11 @@ Authorization: Bearer <token>
     "latitude": -15.7801,
     "longitude": -47.9292,
     "status": "ABERTA",
-    "criado_em": "2026-10-20T22:54:15.000Z"
+    "criado_em": "2026-10-20T22:54:15.000Z",
+    "minha": false,
+    "confirmacoes": 0,
+    "votos_resolvida": 0,
+    "meu_voto": null
   }
 ]
 ```
@@ -272,6 +278,31 @@ Authorization: Bearer <token>
 ```json
 { "erro": "não autorizado" }
 ```
+
+---
+
+## POST /ocorrencias/:id/confirmacoes
+
+Registra o voto do usuário autenticado em uma ocorrência (um voto por usuário; votar de novo troca o voto).
+
+**Header obrigatório:** `Authorization: Bearer <token>`
+
+**Recebe (JSON):**
+```json
+{ "tipo": "AINDA_EXISTE" }
+```
+`tipo` aceita `AINDA_EXISTE` ou `RESOLVIDA`.
+
+**Retorna 200 (sucesso):**
+```json
+{ "id": 1, "status": "EM_VALIDACAO", "confirmacoes": 1, "votos_resolvida": 0, "meu_voto": "AINDA_EXISTE" }
+```
+
+Regras de status (limites no back-end: 3 confirmações e 2 votos de resolvida):
+- 1 a 2 confirmações: `EM_VALIDACAO`; 3 ou mais: `VALIDADA`; sem confirmações: `ABERTA`.
+- 2 votos `RESOLVIDA`, ou o voto `RESOLVIDA` do autor: `RESOLVIDA`.
+
+**Erros:** 400 (id ou tipo inválido), 403 (autor votando `AINDA_EXISTE` na própria ocorrência), 404 (não existe ou cancelada), 409 (ocorrência já resolvida, expirada ou duplicada).
 
 ---
 
@@ -309,7 +340,7 @@ Authorization: Bearer <token>
 { "erro": "só é possível cancelar ocorrências que ainda estão abertas" }
 ```
 
-Regra: o autor só cancela enquanto o status for `ABERTA`. Depois disso (validação, envio ao órgão, etc.) a ocorrência deixa de ser só dele.
+Regra: o autor só cancela enquanto o status for `ABERTA` e a ocorrência não tiver recebido nenhum voto (409 caso contrário). Depois disso (validação, envio ao órgão, etc.) a ocorrência deixa de ser só dele.
 
 ---
 

@@ -4,6 +4,10 @@ const autenticar = require('../auth');
 
 const router = express.Router();
 
+// Regras da validação pela comunidade (versão de teste). Ajuste aqui para mudar o rigor.
+const LIMITE_VALIDACAO = 3; // confirmações "ainda está lá" para a ocorrência ficar VALIDADA
+const LIMITE_RESOLVIDA = 2; // votos "já foi resolvido" para a ocorrência ficar RESOLVIDA
+
 // Converte número ou texto numérico em número; qualquer outra coisa vira NaN.
 function paraNumero(valor) {
   if (typeof valor === 'number') return valor;
@@ -104,24 +108,44 @@ router.post('/', autenticar, async (req, res) => {
 // Lista as ocorrências, da mais recente para a mais antiga.
 // ?minhas=true retorna só as do usuário autenticado.
 // Ocorrências canceladas pelo autor não aparecem em nenhuma listagem.
+// Cada item traz as contagens de votos da comunidade e o voto do próprio usuário.
 router.get('/', autenticar, async (req, res) => {
   const apenasMinhas = req.query.minhas === 'true';
 
-  const valores = [];
+  // $1 é sempre o usuário autenticado (usado em "minha" e "meu_voto")
+  const valores = [req.usuarioId];
   const condicoes = ["o.status <> 'CANCELADA'"];
 
   if (apenasMinhas) {
-    valores.push(req.usuarioId);
-    condicoes.push(`o.usuario_id = $${valores.length}`);
+    condicoes.push('o.usuario_id = $1');
   }
 
   try {
+    // Expiração: ocorrências em aberto/validação cuja categoria tem prazo e que ficaram
+    // sem atividade (criação ou última confirmação) além do prazo passam a EXPIRADA.
+    await pool.query(
+      `UPDATE ocorrencias o
+          SET status = 'EXPIRADA', atualizado_em = CURRENT_TIMESTAMP
+         FROM categorias c
+        WHERE c.id = o.categoria_id
+          AND c.tempo_expiracao IS NOT NULL
+          AND o.status IN ('ABERTA', 'EM_VALIDACAO')
+          AND o.atualizado_em + c.tempo_expiracao < CURRENT_TIMESTAMP`
+    );
+
     const result = await pool.query(
       `SELECT o.id, o.usuario_id, o.categoria_id, c.nome AS categoria_nome,
               o.titulo, o.descricao, o.foto_url,
               ST_Y(o.localizacao::geometry) AS latitude,
               ST_X(o.localizacao::geometry) AS longitude,
-              o.status, o.criado_em
+              o.status, o.criado_em,
+              (o.usuario_id = $1) AS minha,
+              (SELECT COUNT(*)::int FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.tipo = 'AINDA_EXISTE') AS confirmacoes,
+              (SELECT COUNT(*)::int FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.tipo = 'RESOLVIDA') AS votos_resolvida,
+              (SELECT f.tipo FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.usuario_id = $1) AS meu_voto
        FROM ocorrencias o
        JOIN categorias c ON c.id = o.categoria_id
        WHERE ${condicoes.join(' AND ')}
@@ -136,6 +160,104 @@ router.get('/', autenticar, async (req, res) => {
     return res.status(500).json({
       erro: 'erro interno do servidor'
     });
+  }
+});
+
+// POST /ocorrencias/:id/confirmacoes
+// Registra (ou troca) o voto do usuário autenticado: AINDA_EXISTE ou RESOLVIDA.
+// O status da ocorrência é recalculado a partir dos votos.
+router.post('/:id/confirmacoes', autenticar, async (req, res) => {
+  const id = Number(req.params.id);
+  const tipo = req.body?.tipo;
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ erro: 'id inválido' });
+  }
+
+  if (tipo !== 'AINDA_EXISTE' && tipo !== 'RESOLVIDA') {
+    return res.status(400).json({ erro: 'tipo deve ser AINDA_EXISTE ou RESOLVIDA' });
+  }
+
+  const cliente = await pool.connect();
+
+  try {
+    await cliente.query('BEGIN');
+
+    const existente = await cliente.query(
+      'SELECT usuario_id, status FROM ocorrencias WHERE id = $1 FOR UPDATE',
+      [id]
+    );
+
+    if (existente.rowCount === 0 || existente.rows[0].status === 'CANCELADA') {
+      await cliente.query('ROLLBACK');
+      return res.status(404).json({ erro: 'ocorrência não encontrada' });
+    }
+
+    const { usuario_id: autorId, status: statusAtual } = existente.rows[0];
+    const ehAutor = Number(autorId) === Number(req.usuarioId);
+
+    const ACEITAM_VOTO = ['ABERTA', 'EM_VALIDACAO', 'VALIDADA', 'ENVIADA_PREFEITURA', 'EM_ATENDIMENTO'];
+    if (!ACEITAM_VOTO.includes(statusAtual)) {
+      await cliente.query('ROLLBACK');
+      return res.status(409).json({ erro: 'esta ocorrência não aceita mais votos' });
+    }
+
+    if (tipo === 'AINDA_EXISTE' && ehAutor) {
+      await cliente.query('ROLLBACK');
+      return res.status(403).json({ erro: 'o autor não pode confirmar a própria ocorrência' });
+    }
+
+    await cliente.query(
+      `INSERT INTO confirmacoes (ocorrencia_id, usuario_id, tipo)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (ocorrencia_id, usuario_id)
+       DO UPDATE SET tipo = EXCLUDED.tipo, criado_em = CURRENT_TIMESTAMP`,
+      [id, req.usuarioId, tipo]
+    );
+
+    const contagem = await cliente.query(
+      `SELECT COUNT(*) FILTER (WHERE tipo = 'AINDA_EXISTE')::int AS confirmacoes,
+              COUNT(*) FILTER (WHERE tipo = 'RESOLVIDA')::int AS votos_resolvida
+         FROM confirmacoes WHERE ocorrencia_id = $1`,
+      [id]
+    );
+    const { confirmacoes, votos_resolvida } = contagem.rows[0];
+
+    // O autor marcando "resolvida" encerra na hora; os demais precisam atingir o limite.
+    const resolvida = (tipo === 'RESOLVIDA' && ehAutor) || votos_resolvida >= LIMITE_RESOLVIDA;
+
+    let novoStatus = statusAtual;
+    if (resolvida) {
+      novoStatus = 'RESOLVIDA';
+    } else if (['ABERTA', 'EM_VALIDACAO', 'VALIDADA'].includes(statusAtual)) {
+      if (confirmacoes >= LIMITE_VALIDACAO) novoStatus = 'VALIDADA';
+      else if (confirmacoes >= 1) novoStatus = 'EM_VALIDACAO';
+      else novoStatus = 'ABERTA';
+    }
+
+    await cliente.query(
+      'UPDATE ocorrencias SET status = $1, atualizado_em = CURRENT_TIMESTAMP WHERE id = $2',
+      [novoStatus, id]
+    );
+
+    await cliente.query('COMMIT');
+
+    return res.status(200).json({
+      id,
+      status: novoStatus,
+      confirmacoes,
+      votos_resolvida,
+      meu_voto: tipo
+    });
+  } catch (erro) {
+    await cliente.query('ROLLBACK').catch(() => {});
+    console.error(erro);
+
+    return res.status(500).json({
+      erro: 'erro interno do servidor'
+    });
+  } finally {
+    cliente.release();
   }
 });
 
@@ -169,6 +291,17 @@ router.delete('/:id', autenticar, async (req, res) => {
     if (ocorrencia.status !== 'ABERTA') {
       return res.status(409).json({
         erro: 'só é possível cancelar ocorrências que ainda estão abertas'
+      });
+    }
+
+    const votos = await pool.query(
+      'SELECT 1 FROM confirmacoes WHERE ocorrencia_id = $1 LIMIT 1',
+      [id]
+    );
+
+    if (votos.rowCount > 0) {
+      return res.status(409).json({
+        erro: 'só é possível cancelar ocorrências que ainda não receberam votos'
       });
     }
 
