@@ -281,6 +281,20 @@ Authorization: Bearer <token>
 
 ---
 
+## GET /ocorrencias/versao
+
+Resposta leve para o app saber se algo mudou sem baixar a lista inteira (usada a cada ~20 s com a tela aberta).
+
+**Header obrigatório:** `Authorization: Bearer <token>`
+
+**Retorna 200:**
+```json
+{ "versao": "12|1763750400.123456" }
+```
+O valor muda quando uma ocorrência é criada, votada, cancelada ou muda de status. O app só recarrega `GET /ocorrencias` quando ele muda.
+
+---
+
 ## POST /ocorrencias/:id/confirmacoes
 
 Registra o voto do usuário autenticado em uma ocorrência (um voto por usuário; votar de novo troca o voto).

@@ -104,6 +104,44 @@ router.post('/', autenticar, async (req, res) => {
   }
 });
 
+// Expiração: ocorrências em aberto/validação cuja categoria tem prazo e que ficaram
+// sem atividade (criação ou última confirmação) além do prazo passam a EXPIRADA.
+async function expirarVencidas() {
+  await pool.query(
+    `UPDATE ocorrencias o
+        SET status = 'EXPIRADA', atualizado_em = CURRENT_TIMESTAMP
+       FROM categorias c
+      WHERE c.id = o.categoria_id
+        AND c.tempo_expiracao IS NOT NULL
+        AND o.status IN ('ABERTA', 'EM_VALIDACAO')
+        AND o.atualizado_em + c.tempo_expiracao < CURRENT_TIMESTAMP`
+  );
+}
+
+// GET /ocorrencias/versao
+// Resposta leve usada pelo app para saber se algo mudou (nova ocorrência, voto, cancelamento,
+// mudança de status). O app só recarrega a lista quando este valor muda.
+router.get('/versao', autenticar, async (req, res) => {
+  try {
+    await expirarVencidas();
+
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS total,
+              EXTRACT(EPOCH FROM MAX(atualizado_em))::text AS ultima
+         FROM ocorrencias`
+    );
+    const { total, ultima } = result.rows[0];
+
+    return res.status(200).json({ versao: `${total}|${ultima ?? 0}` });
+  } catch (erro) {
+    console.error(erro);
+
+    return res.status(500).json({
+      erro: 'erro interno do servidor'
+    });
+  }
+});
+
 // GET /ocorrencias
 // Lista as ocorrências, da mais recente para a mais antiga.
 // ?minhas=true retorna só as do usuário autenticado.
@@ -121,17 +159,7 @@ router.get('/', autenticar, async (req, res) => {
   }
 
   try {
-    // Expiração: ocorrências em aberto/validação cuja categoria tem prazo e que ficaram
-    // sem atividade (criação ou última confirmação) além do prazo passam a EXPIRADA.
-    await pool.query(
-      `UPDATE ocorrencias o
-          SET status = 'EXPIRADA', atualizado_em = CURRENT_TIMESTAMP
-         FROM categorias c
-        WHERE c.id = o.categoria_id
-          AND c.tempo_expiracao IS NOT NULL
-          AND o.status IN ('ABERTA', 'EM_VALIDACAO')
-          AND o.atualizado_em + c.tempo_expiracao < CURRENT_TIMESTAMP`
-    );
+    await expirarVencidas();
 
     const result = await pool.query(
       `SELECT o.id, o.usuario_id, o.categoria_id, c.nome AS categoria_nome,

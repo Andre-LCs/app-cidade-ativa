@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
+import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
 
 const COLORS = {
   primaryBlue: '#1F3F77',
@@ -245,6 +246,7 @@ window.addEventListener('message', function (e) {
     var m = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
     if (m && m.tipo === 'atualizar') window.atualizarOcorrencia(m.dados);
     else if (m && m.tipo === 'erro') window.mostrarErro(m.msg);
+    else if (m && m.tipo === 'tudo') window.atualizarTudo(m.dados);
   } catch (_) {}
 });
 
@@ -282,14 +284,40 @@ function abrirCard(o, cat) {
 }
 
 var itens = [];
-DADOS.forEach(function (o) {
+function adicionar(o) {
   if (isNaN(o.lat) || isNaN(o.lon)) return;
   var cat = categoriaDe(o.categoria);
   var m = L.marker([o.lat, o.lon], { icon: iconePara(o, cat) });
   m.on('click', function (e) { L.DomEvent.stopPropagation(e); abrirCard(o, cat); });
   porId[o.id] = { o: o, m: m, cat: cat };
   itens.push({ m: m, k: cat.k });
-});
+}
+DADOS.forEach(adicionar);
+
+// Atualização automática: troca só o que mudou, sem mexer no zoom nem no cartão aberto.
+window.atualizarTudo = function (lista) {
+  var presentes = {};
+  lista.forEach(function (n) {
+    presentes[n.id] = true;
+    var it = porId[n.id];
+    if (!it) { adicionar(n); return; }
+    var o = it.o;
+    o.status = n.status; o.statusRotulo = n.statusRotulo;
+    o.confirmacoes = n.confirmacoes; o.votosRes = n.votosRes; o.meuVoto = n.meuVoto;
+    o.titulo = n.titulo; o.descricao = n.descricao; o.foto = n.foto;
+    it.m.setIcon(iconePara(o, it.cat));
+  });
+  Object.keys(porId).forEach(function (id) {
+    if (presentes[id]) return;
+    var it = porId[id];
+    delete porId[id];
+    itens = itens.filter(function (i) { return i.m !== it.m; });
+    grupo.removeLayer(it.m);
+    if (atual && String(atual.o.id) === id) { atual = null; fecharCard(); }
+  });
+  desenhar(false);
+  if (atual && card.classList.contains('on')) abrirCard(atual.o, atual.cat);
+};
 
 var ativos = {};
 CATS.concat([PADRAO]).forEach(function (c) { ativos[c.k] = true; });
@@ -326,8 +354,9 @@ CATS.forEach(function (c) {
 desenhar(true);
 </script></body></html>`;
 
-function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
-  const dados = pontos
+// Dados no formato que a página do mapa espera (expiradas e duplicadas não aparecem no mapa).
+function prepararDados(pontos: Ocorrencia[]) {
+  return pontos
     .filter((o) => o.status !== 'EXPIRADA' && o.status !== 'DUPLICADA')
     .map((o) => ({
     id: o.id,
@@ -345,7 +374,10 @@ function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
     statusRotulo: ROTULO_STATUS[o.status] ?? o.status,
     criado: o.criado_em,
   }));
-  const json = JSON.stringify(dados).replace(/</g, '\\u003c');
+}
+
+function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
+  const json = JSON.stringify(prepararDados(pontos)).replace(/</g, '\\u003c');
 
   return PAGINA.replace('__DADOS__', () => json)
     .replace('__SAFE__', () => String(Math.round(margemInferior)))
@@ -360,10 +392,13 @@ export default function Mapa() {
   insetRef.current = insets.bottom;
   const webViewRef = useRef<WebView>(null);
   const iframeRef = useRef<any>(null);
+  const paginaProntaRef = useRef(false);
+  const responderRef = useRef<(msg: any) => void>(() => {});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const carregar = useCallback(async () => {
+  // silencioso = atualização automática: com a página pronta, troca só os pinos que mudaram
+  const carregar = useCallback(async (silencioso = false) => {
     setErro(null);
     const token = await tokenStorage.getItem('token');
     if (!token) {
@@ -372,7 +407,12 @@ export default function Mapa() {
     }
     try {
       const dados = await apiRequest('/ocorrencias', { headers: { Authorization: `Bearer ${token}` } });
-      setHtml(montarHtml(dados, insetRef.current));
+      if (silencioso && paginaProntaRef.current) {
+        responderRef.current({ tipo: 'tudo', dados: prepararDados(dados) });
+      } else {
+        paginaProntaRef.current = false;
+        setHtml(montarHtml(dados, insetRef.current));
+      }
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível carregar as ocorrências.');
     } finally {
@@ -386,16 +426,20 @@ export default function Mapa() {
     }, [carregar])
   );
 
-  const responder = useCallback((msg: { tipo: 'atualizar'; dados: any } | { tipo: 'erro'; msg: string }) => {
+  useAtualizacaoAutomatica(() => carregar(true));
+
+  const responder = useCallback((msg: { tipo: 'atualizar' | 'tudo'; dados: any } | { tipo: 'erro'; msg: string }) => {
     if (Platform.OS === 'web') {
       iframeRef.current?.contentWindow?.postMessage(JSON.stringify(msg), '*');
       return;
     }
-    const chamada = msg.tipo === 'atualizar'
-      ? `window.atualizarOcorrencia(${JSON.stringify(msg.dados)});`
-      : `window.mostrarErro(${JSON.stringify(msg.msg)});`;
+    let chamada: string;
+    if (msg.tipo === 'erro') chamada = `window.mostrarErro(${JSON.stringify(msg.msg)});`;
+    else if (msg.tipo === 'tudo') chamada = `window.atualizarTudo(${JSON.stringify(msg.dados)});`;
+    else chamada = `window.atualizarOcorrencia(${JSON.stringify(msg.dados)});`;
     webViewRef.current?.injectJavaScript(`${chamada} true;`);
   }, []);
+  responderRef.current = responder;
 
   // A página do mapa pede o voto; o token fica aqui no app, nunca dentro da página.
   const processarMensagem = useCallback(
@@ -453,7 +497,7 @@ export default function Mapa() {
         <View style={styles.banner}>
           <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
           <Text style={styles.bannerTexto}>{erro}</Text>
-          <TouchableOpacity onPress={carregar}>
+          <TouchableOpacity onPress={() => carregar()}>
             <Text style={styles.link}>Tentar de novo</Text>
           </TouchableOpacity>
         </View>
@@ -467,6 +511,7 @@ export default function Mapa() {
         React.createElement('iframe', {
           ref: iframeRef,
           srcDoc: html,
+          onLoad: () => { paginaProntaRef.current = true; },
           style: { flex: 1, width: '100%', height: '100%', border: 0 },
           title: 'Mapa de ocorrências',
         })
@@ -476,6 +521,7 @@ export default function Mapa() {
           ref={webViewRef}
           source={{ html }}
           onMessage={(e) => processarMensagem(e.nativeEvent.data)}
+          onLoadEnd={() => { paginaProntaRef.current = true; }}
           style={styles.mapa}
           javaScriptEnabled
           startInLoadingState

@@ -15,6 +15,7 @@ import { Stack, router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
+import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
 
 // Mesmas cores oficiais usadas em Login, Cadastro e Perfil
 const COLORS = {
@@ -115,6 +116,9 @@ export default function MinhasOcorrencias() {
       carregar();
     }, [carregar])
   );
+
+  // atualiza sozinha quando algo muda (voto de outra pessoa, mudança de status...)
+  useAtualizacaoAutomatica(carregar);
 
   const aoPuxarParaAtualizar = () => {
     setAtualizando(true);
