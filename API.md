@@ -376,3 +376,24 @@ Toda resposta de erro segue o mesmo formato:
 | 409 | Conflito de estado (ex.: cancelar ocorrência que já não está aberta) |
 | 401 | Não autenticado (token ausente/inválido, ou credenciais erradas) |
 | 500 | Erro interno do servidor |
+
+## Recuperação de senha
+
+Fluxo em duas etapas, por código de 6 dígitos enviado por e-mail (válido por 15 minutos).
+
+### POST /recuperar-senha
+
+Corpo: `{ "email": "usuario@email.com" }`
+
+Sempre responde `200` com a mesma mensagem, exista o e-mail ou não (para não revelar quem tem conta). Se o e-mail existir, um código é enviado. Um novo pedido só gera outro código após 60 segundos; o código anterior deixa de valer.
+
+- `400`: `email` ausente.
+
+### POST /redefinir-senha
+
+Corpo: `{ "email": "usuario@email.com", "codigo": "123456", "nova_senha": "minhasenha" }`
+
+- `200`: `{ "mensagem": "senha alterada com sucesso" }`
+- `400`: campos ausentes, senha com menos de 6 caracteres, código inválido ou expirado, ou mais de 5 tentativas erradas (é preciso pedir novo código).
+
+O envio de e-mail usa HTTPS (o plano gratuito do Render bloqueia SMTP). Variáveis de ambiente do back-end: `EMAIL_WEBHOOK_URL` e `EMAIL_WEBHOOK_SEGREDO` (relay em Google Apps Script que envia pelo Gmail; código em `docs/apps-script-email.gs`).

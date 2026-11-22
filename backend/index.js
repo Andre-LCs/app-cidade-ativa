@@ -7,6 +7,7 @@ const loginRoutes = require('./routes/login');
 const usuarioRoutes = require('./routes/usuario');
 const categoriasRoutes = require('./routes/categorias');
 const ocorrenciasRoutes = require('./routes/ocorrencias');
+const recuperacaoRoutes = require('./routes/recuperacao');
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/login', loginRoutes);
 app.use('/usuario', usuarioRoutes);
 app.use('/categorias', categoriasRoutes);
 app.use('/ocorrencias', ocorrenciasRoutes);
+app.use('/', recuperacaoRoutes);
 
 const PORT = process.env.PORT || 3000;
 

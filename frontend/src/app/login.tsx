@@ -118,7 +118,7 @@ export default function Login() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>E-mail ou Usuário</Text>
+            <Text style={styles.label}>E-mail</Text>
             <View
               style={[
                 styles.inputWrapper,
@@ -184,7 +184,11 @@ export default function Login() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.forgotPasswordButton} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/recuperar-senha')}
+          >
             <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
           </TouchableOpacity>
 
