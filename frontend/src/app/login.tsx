@@ -9,27 +9,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
+  ScrollView,
   Alert,
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router'; // NOVO: necessário pra navegar pro Cadastro
+import { Stack, router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as tokenStorage from '../services/tokenStorage';
 import { API_URL } from '../services/api';
+import { COLORS } from '../theme';
 
 
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  borderFocused: '#1F3F77',
-  white: '#FFFFFF',
-};
 
 function showAlert(title: string, message: string) {
   if (Platform.OS === 'web') {
@@ -40,6 +31,7 @@ function showAlert(title: string, message: string) {
 }
 
 export default function Login() {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -99,32 +91,39 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
 
-      <View style={styles.innerContainer}>
-
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/images/logo-projeto.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Faixa de marca */}
+        <View style={[styles.hero, { paddingTop: insets.top + 32 }]}>
+          <View style={styles.skyline} pointerEvents="none">
+            {[44, 110, 70, 0, 96, 60, 120].map((h, i) =>
+              h === 0 ? <View key={i} style={{ width: 40 }} /> : <View key={i} style={[styles.predio, { height: h }]} />
+            )}
+          </View>
+          <View style={styles.logoCard}>
+            <Image
+              source={require('../../assets/images/logo-projeto.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={styles.heroTitle}>Cuide da sua cidade</Text>
+          <Text style={styles.heroSubtitle}>
+            Registre problemas, valide com a comunidade e acompanhe cada solução.
+          </Text>
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.headerContainer}>
-            <Text style={styles.title}>Bem-vindo!</Text>
-            <Text style={styles.subtitle}>Acesse sua conta no Cidade Ativa</Text>
-          </View>
-
+        {/* Folha branca com o formulário */}
+        <View style={[styles.sheet, { paddingBottom: 24 + insets.bottom }]}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>E-mail</Text>
-            <View
-              style={[
-                styles.inputWrapper,
-                isEmailFocused && styles.inputWrapperFocused
-              ]}
-            >
+            <View style={[styles.inputWrapper, isEmailFocused && styles.inputWrapperFocused]}>
               <Ionicons
                 name="mail-outline"
                 size={18}
@@ -134,7 +133,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="exemplo@email.com"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={COLORS.placeholder}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -148,12 +147,7 @@ export default function Login() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Senha</Text>
-            <View
-              style={[
-                styles.inputWrapper,
-                isPasswordFocused && styles.inputWrapperFocused
-              ]}
-            >
+            <View style={[styles.inputWrapper, isPasswordFocused && styles.inputWrapperFocused]}>
               <Ionicons
                 name="lock-closed-outline"
                 size={18}
@@ -163,7 +157,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="Sua senha"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={COLORS.placeholder}
                 secureTextEntry={!isPasswordVisible}
                 value={password}
                 onChangeText={setPassword}
@@ -174,9 +168,10 @@ export default function Login() {
                 onPress={() => setIsPasswordVisible(!isPasswordVisible)}
                 style={styles.eyeIcon}
                 activeOpacity={0.7}
+                accessibilityLabel={isPasswordVisible ? 'Ocultar senha' : 'Mostrar senha'}
               >
                 <Ionicons
-                  name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                  name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
                   size={18}
                   color={COLORS.textSecondary}
                 />
@@ -204,141 +199,118 @@ export default function Login() {
               <Text style={styles.loginButtonText}>Entrar</Text>
             )}
           </TouchableOpacity>
-        </View>
 
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>Ainda não tem uma conta?</Text>
-          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/cadastro')}>
-            <Text style={styles.registerButtonText}>Cadastre-se</Text>
+          <TouchableOpacity
+            style={styles.registerButton}
+            activeOpacity={0.8}
+            onPress={() => router.push('/cadastro')}
+          >
+            <Text style={styles.registerButtonText}>Criar conta</Text>
           </TouchableOpacity>
         </View>
-
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  container: { flex: 1, backgroundColor: COLORS.primaryBlue },
+  scroll: { flexGrow: 1 },
+  hero: {
+    backgroundColor: COLORS.primaryBlue,
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingBottom: 56,
+    overflow: 'hidden',
   },
-  innerContainer: {
-    flex: 1,
-    justifyContent: 'space-evenly',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+  skyline: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
   },
-  logoContainer: {
+  predio: { width: 40, backgroundColor: 'rgba(255,255,255,0.07)' },
+  logoCard: {
+    width: 128,
+    height: 128,
+    borderRadius: 32,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#081430',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  logo: {
-    width: 340,
-    height: 170,
-  },
-  card: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  headerContainer: {
-    marginBottom: 14,
-  },
-  title: {
-    fontSize: 22,
+  logo: { width: 100, height: 100 },
+  heroTitle: {
+    marginTop: 20,
+    fontSize: 27,
     fontWeight: '800',
-    color: COLORS.primaryBlue,
-    marginBottom: 2,
+    color: COLORS.white,
+    letterSpacing: -0.3,
   },
-  subtitle: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '400',
+  heroSubtitle: {
+    marginTop: 6,
+    fontSize: 14,
+    lineHeight: 20,
+    color: COLORS.onBlueMuted,
+    textAlign: 'center',
+    maxWidth: 290,
   },
-  inputGroup: {
-    marginBottom: 10,
+  sheet: {
+    flexGrow: 1,
+    marginTop: -28,
+    backgroundColor: COLORS.cardBackground,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 28,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
-  },
+  inputGroup: { marginBottom: 14 },
+  label: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.inputBackground,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: COLORS.border,
-    paddingHorizontal: 12,
-    height: 44,
+    paddingHorizontal: 14,
+    height: 50,
   },
-  inputWrapperFocused: {
-    borderColor: COLORS.borderFocused,
-    backgroundColor: COLORS.white,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    color: COLORS.textPrimary,
-    fontSize: 14,
-    height: '100%',
-  },
-  eyeIcon: {
-    padding: 4,
-  },
-  forgotPasswordButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 14,
-    marginTop: 2,
-  },
-  forgotPasswordText: {
-    color: COLORS.primaryGreen,
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  inputWrapperFocused: { borderColor: COLORS.borderFocused, backgroundColor: COLORS.white },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, color: COLORS.textPrimary, fontSize: 14, height: '100%' },
+  eyeIcon: { padding: 6 },
+  forgotPasswordButton: { alignSelf: 'flex-end', marginBottom: 18, paddingVertical: 4 },
+  forgotPasswordText: { color: COLORS.primaryBlue, fontSize: 13, fontWeight: '700' },
   loginButton: {
     backgroundColor: COLORS.primaryBlue,
-    borderRadius: 10,
-    height: 46,
+    borderRadius: 14,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: COLORS.primaryBlue,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  loginButtonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  footerContainer: {
-    flexDirection: 'row',
+  loginButtonText: { color: COLORS.white, fontSize: 16, fontWeight: '700' },
+  registerButton: {
+    marginTop: 12,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: COLORS.primaryGreen,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footerText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    marginRight: 6,
-  },
-  registerButtonText: {
-    color: COLORS.primaryGreen,
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  registerButtonText: { color: COLORS.primaryGreen, fontSize: 16, fontWeight: '700' },
 });

@@ -19,26 +19,8 @@ import * as Location from 'expo-location';
 import { apiRequest } from '../services/api';
 import { uploadImagem } from '../services/cloudinary';
 import * as tokenStorage from '../services/tokenStorage';
+import { COLORS } from '../theme';
 
-// Mesmas cores oficiais usadas em Login, Cadastro e Perfil
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  borderCard: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  placeholder: '#94A3B8',
-  white: '#FFFFFF',
-  error: '#DC2626',
-  errorBackground: '#FEF2F2',
-  errorBorder: '#FECACA',
-  successBackground: '#F0FDF4',
-  successBorder: '#BBF7D0',
-};
 
 type Categoria = { id: number; nome: string; descricao: string | null };
 type Coords = { latitude: number; longitude: number };
@@ -255,7 +237,7 @@ export default function NovaOcorrencia() {
       style={styles.container}
     >
       <Stack.Screen options={{ title: 'Nova ocorrência' }} />
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContainer}

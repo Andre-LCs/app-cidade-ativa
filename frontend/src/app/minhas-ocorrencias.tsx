@@ -16,23 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
 import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
+import { COLORS, STATUS, categoriaVisual, primeiroNome } from '../theme';
 
-// Mesmas cores oficiais usadas em Login, Cadastro e Perfil
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  placeholder: '#94A3B8',
-  white: '#FFFFFF',
-  error: '#DC2626',
-  errorBackground: '#FEF2F2',
-  errorBorder: '#FECACA',
-};
 
 type Ocorrencia = {
   id: number;
@@ -44,17 +29,8 @@ type Ocorrencia = {
   criado_em: string;
   confirmacoes?: number;
   votos_resolvida?: number;
-};
-
-const STATUS: Record<string, { label: string; cor: string; fundo: string }> = {
-  ABERTA: { label: 'Aberta', cor: '#1F3F77', fundo: '#E8EEF8' },
-  EM_VALIDACAO: { label: 'Em validação', cor: '#B45309', fundo: '#FEF3C7' },
-  VALIDADA: { label: 'Validada', cor: '#15803D', fundo: '#DCFCE7' },
-  ENVIADA_PREFEITURA: { label: 'Enviada ao órgão responsável', cor: '#1F3F77', fundo: '#E8EEF8' },
-  EM_ATENDIMENTO: { label: 'Em atendimento', cor: '#B45309', fundo: '#FEF3C7' },
-  RESOLVIDA: { label: 'Resolvida', cor: '#15803D', fundo: '#DCFCE7' },
-  EXPIRADA: { label: 'Expirada', cor: '#64748B', fundo: '#F1F5F9' },
-  DUPLICADA: { label: 'Duplicada', cor: '#64748B', fundo: '#F1F5F9' },
+  limite_validacao?: number;
+  categoria_id?: number;
 };
 
 // Pede ao Cloudinary uma versão pequena da foto (carrega mais rápido na lista).
@@ -74,6 +50,7 @@ export default function MinhasOcorrencias() {
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [nome, setNome] = useState('');
 
   const carregar = useCallback(async () => {
     setErro(null);
@@ -85,6 +62,10 @@ export default function MinhasOcorrencias() {
     }
 
     try {
+      const salvo = await tokenStorage.getItem('usuario');
+      if (salvo) {
+        try { setNome(JSON.parse(salvo).nome ?? ''); } catch { /* ignora */ }
+      }
       const data = await apiRequest('/ocorrencias?minhas=true', {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -161,31 +142,56 @@ export default function MinhasOcorrencias() {
 
   const renderItem = ({ item }: { item: Ocorrencia }) => {
     const st = STATUS[item.status] ?? { label: item.status, cor: COLORS.textSecondary, fundo: COLORS.inputBackground };
+    const cat = categoriaVisual(item.categoria_nome);
+    const limite = item.limite_validacao ?? 3;
+    const confirmacoes = item.confirmacoes ?? 0;
+    const resolvida = item.status === 'RESOLVIDA';
+    const encerrada = item.status === 'EXPIRADA' || item.status === 'DUPLICADA';
+    // validação em curso: mostra x/limite; depois de validada (ou em andamento) a barra fica cheia
+    const emValidacao = item.status === 'ABERTA' || item.status === 'EM_VALIDACAO';
+    const progresso = resolvida || !emValidacao ? 1 : Math.min(confirmacoes, limite) / limite;
 
     return (
       <View style={styles.card}>
         {item.foto_url ? (
           <Image source={{ uri: miniatura(item.foto_url) }} style={styles.thumb} resizeMode="cover" />
         ) : (
-          <View style={[styles.thumb, styles.thumbVazio]}>
-            <Ionicons name="image-outline" size={26} color={COLORS.placeholder} />
+          <View style={[styles.thumb, { backgroundColor: cat.fundo, justifyContent: 'center', alignItems: 'center' }]}>
+            <Ionicons name={cat.icone} size={30} color={cat.cor} />
           </View>
         )}
 
         <View style={styles.cardInfo}>
-          <Text style={styles.cardTitulo} numberOfLines={2}>{item.titulo}</Text>
-          <Text style={styles.cardCategoria}>
-            {item.categoria_nome}
-            {(item.confirmacoes ?? 0) > 0
-              ? ` • ${item.confirmacoes} ${item.confirmacoes === 1 ? 'confirmação' : 'confirmações'}`
-              : ''}
-          </Text>
+          <View style={styles.cardTopo}>
+            <Text style={styles.cardTitulo} numberOfLines={2}>{item.titulo}</Text>
+            <Text style={styles.cardData}>{formatarData(item.criado_em)}</Text>
+          </View>
+          <View style={styles.categoriaLinha}>
+            <Ionicons name={cat.icone} size={13} color={cat.cor} />
+            <Text style={styles.cardCategoria} numberOfLines={1}>{item.categoria_nome}</Text>
+          </View>
+
           <View style={styles.cardRodape}>
             <View style={[styles.badge, { backgroundColor: st.fundo }]}>
               <Text style={[styles.badgeTexto, { color: st.cor }]}>{st.label}</Text>
             </View>
-            <Text style={styles.cardData}>{formatarData(item.criado_em)}</Text>
+            {!encerrada && (
+              <View style={styles.progressoTrilho}>
+                <View
+                  style={[
+                    styles.progressoPreenchido,
+                    { width: `${Math.round(progresso * 100)}%`, backgroundColor: COLORS.primaryGreen },
+                  ]}
+                />
+              </View>
+            )}
+            {resolvida ? (
+              <Ionicons name="checkmark-circle" size={18} color={COLORS.primaryGreen} />
+            ) : emValidacao ? (
+              <Text style={styles.progressoTexto}>{Math.min(confirmacoes, limite)}/{limite}</Text>
+            ) : null}
           </View>
+
           {item.status === 'ABERTA' && (item.votos_resolvida ?? 0) === 0 && (
             <TouchableOpacity
               style={styles.cancelar}
@@ -202,6 +208,31 @@ export default function MinhasOcorrencias() {
     );
   };
 
+  const totalConfirmacoes = itens.reduce((soma, o) => soma + (o.confirmacoes ?? 0), 0);
+  const totalResolvidas = itens.filter((o) => o.status === 'RESOLVIDA').length;
+  const saudacao = primeiroNome(nome);
+
+  const cabecalho = (
+    <View style={styles.faixa}>
+      <Text style={styles.saudacao}>{saudacao ? `Oi, ${saudacao}!` : 'Oi!'}</Text>
+      <Text style={styles.saudacaoSub}>Veja suas ocorrências</Text>
+      <View style={styles.resumo}>
+        <View style={styles.resumoItem}>
+          <Text style={styles.resumoNumero}>{itens.length}</Text>
+          <Text style={styles.resumoRotulo}>{itens.length === 1 ? 'registrada' : 'registradas'}</Text>
+        </View>
+        <View style={styles.resumoItem}>
+          <Text style={styles.resumoNumero}>{totalConfirmacoes}</Text>
+          <Text style={styles.resumoRotulo}>{totalConfirmacoes === 1 ? 'confirmação' : 'confirmações'}</Text>
+        </View>
+        <View style={styles.resumoItem}>
+          <Text style={styles.resumoNumero}>{totalResolvidas}</Text>
+          <Text style={styles.resumoRotulo}>{totalResolvidas === 1 ? 'resolvida' : 'resolvidas'}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -211,10 +242,10 @@ export default function MinhasOcorrencias() {
           headerRight: () => (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <TouchableOpacity onPress={() => router.push('/mapa')} accessibilityLabel="Abrir mapa de ocorrências">
-                <Ionicons name="map-outline" size={26} color={COLORS.primaryBlue} />
+                <Ionicons name="map-outline" size={26} color={COLORS.white} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => router.push('/perfil')} accessibilityLabel="Abrir perfil">
-                <Ionicons name="person-circle-outline" size={28} color={COLORS.primaryBlue} />
+                <Ionicons name="person-circle-outline" size={28} color={COLORS.white} />
               </TouchableOpacity>
             </View>
           ),
@@ -237,6 +268,7 @@ export default function MinhasOcorrencias() {
           data={itens}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
+          ListHeaderComponent={cabecalho}
           contentContainerStyle={styles.lista}
           refreshing={atualizando}
           onRefresh={aoPuxarParaAtualizar}
@@ -271,7 +303,22 @@ export default function MinhasOcorrencias() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  lista: { padding: 16, paddingBottom: 8, flexGrow: 1 },
+  lista: { paddingBottom: 8, flexGrow: 1 },
+  faixa: {
+    backgroundColor: COLORS.primaryBlue,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 22,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    marginBottom: 16,
+  },
+  saudacao: { fontSize: 24, fontWeight: '800', color: COLORS.white },
+  saudacaoSub: { fontSize: 14, color: COLORS.onBlueMuted, marginTop: 2 },
+  resumo: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  resumoItem: { flex: 1, backgroundColor: COLORS.onBlueTint, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12 },
+  resumoNumero: { fontSize: 22, fontWeight: '800', color: COLORS.white },
+  resumoRotulo: { fontSize: 11, fontWeight: '600', color: COLORS.onBlueMuted },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -288,10 +335,11 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 10,
+    padding: 12,
+    marginHorizontal: 16,
     marginBottom: 12,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 3 },
@@ -299,15 +347,19 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  thumb: { width: 84, height: 84, borderRadius: 10 },
-  thumbVazio: { backgroundColor: COLORS.inputBackground, justifyContent: 'center', alignItems: 'center' },
+  thumb: { width: 84, height: 84, borderRadius: 14 },
+  cardTopo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  categoriaLinha: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  progressoTrilho: { flex: 1, height: 6, borderRadius: 3, backgroundColor: COLORS.border, marginHorizontal: 8, overflow: 'hidden' },
+  progressoPreenchido: { height: 6, borderRadius: 3 },
+  progressoTexto: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary },
   cardInfo: { flex: 1, marginLeft: 12, justifyContent: 'space-between' },
-  cardTitulo: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  cardCategoria: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  cardRodape: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  cardTitulo: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, flex: 1 },
+  cardCategoria: { fontSize: 12, color: COLORS.textSecondary, flexShrink: 1 },
+  cardRodape: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   badge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 1 },
   badgeTexto: { fontSize: 11, fontWeight: '700' },
-  cardData: { fontSize: 11, color: COLORS.placeholder, marginLeft: 8 },
+  cardData: { fontSize: 11, color: COLORS.textSecondary },
   cancelar: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', marginTop: 8 },
   cancelarTexto: { color: COLORS.error, fontSize: 12, fontWeight: '600' },
   vazio: { alignItems: 'center', paddingHorizontal: 32, paddingTop: 64 },
@@ -321,9 +373,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primaryBlue,
-    borderRadius: 10,
-    height: 48,
+    backgroundColor: COLORS.primaryGreen,
+    borderRadius: 14,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,

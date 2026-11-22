@@ -7,15 +7,8 @@ import { WebView } from 'react-native-webview';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
 import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
+import { COLORS } from '../theme';
 
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  background: '#F8FAFC',
-  white: '#FFFFFF',
-  error: '#DC2626',
-  errorBackground: '#FEF2F2',
-  errorBorder: '#FECACA',
-};
 
 // Limites da validação pela comunidade. Mantenha iguais aos do back-end (routes/ocorrencias.js).
 const LIMITE_VALIDACAO = 3;

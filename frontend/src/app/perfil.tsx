@@ -13,29 +13,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
+import { COLORS, iniciais } from '../theme';
 
-// DESIGN TOKENS (mesmas cores oficiais usadas em Login e Cadastro)
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  borderCard: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  placeholder: '#94A3B8',
-  white: '#FFFFFF',
-  error: '#DC2626',
-  errorBackground: '#FEF2F2',
-  errorBorder: '#FECACA',
-  successBackground: '#F0FDF4',
-  successBorder: '#BBF7D0',
-};
 
 type StatusMessage = {
   tipo: 'sucesso' | 'erro';
@@ -45,6 +27,8 @@ type StatusMessage = {
 export default function Perfil() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
+  const [nomeExibido, setNomeExibido] = useState('');
+  const [emailExibido, setEmailExibido] = useState('');
 
   const [isNomeFocused, setIsNomeFocused] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
@@ -77,6 +61,8 @@ export default function Perfil() {
       });
       setNome(data.nome);
       setEmail(data.email);
+      setNomeExibido(data.nome);
+      setEmailExibido(data.email);
     } catch (error: any) {
       // Token inválido/expirado — desloga e manda pro login
       await tokenStorage.deleteItem('token');
@@ -106,6 +92,8 @@ export default function Perfil() {
         body: JSON.stringify({ nome: nome.trim(), email: email.trim() }),
       });
 
+      setNomeExibido(nome.trim());
+      setEmailExibido(email.trim());
       setStatusMessage({ tipo: 'sucesso', texto: 'Dados atualizados com sucesso!' });
     } catch (error: any) {
       const semConexao =
@@ -193,23 +181,19 @@ export default function Perfil() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <Stack.Screen options={{ title: 'Perfil' }} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.avatarContainer}>
+        <View style={styles.faixa}>
           <View style={styles.avatarCircle}>
-            <Ionicons name="person" size={40} color={COLORS.primaryBlue} />
+            <Text style={styles.avatarIniciais}>{iniciais(nomeExibido)}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.avatarEditBadge}
-            activeOpacity={0.8}
-            onPress={() => Alert.alert('Em breve', 'Troca de foto ainda não implementada.')}
-          >
-            <Ionicons name="camera" size={14} color={COLORS.white} />
-          </TouchableOpacity>
+          <Text style={styles.faixaNome} numberOfLines={1}>{nomeExibido}</Text>
+          <Text style={styles.faixaEmail} numberOfLines={1}>{emailExibido}</Text>
         </View>
 
         <View style={styles.card}>
@@ -375,32 +359,32 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   loadingContainer: { flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
-  scrollContainer: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 20 },
-  avatarContainer: { alignItems: 'center', marginBottom: 16 },
+  scrollContainer: { flexGrow: 1, paddingBottom: 24 },
   avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#E6F1FB',
-    borderWidth: 1.5,
-    borderColor: COLORS.primaryBlue,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: COLORS.white,
+    borderWidth: 4,
+    borderColor: '#7FB8F2',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarEditBadge: {
-    position: 'absolute',
-    right: 4,
-    bottom: 4,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  avatarIniciais: { fontSize: 28, fontWeight: '800', color: COLORS.primaryBlue },
+  faixa: {
     backgroundColor: COLORS.primaryBlue,
-    borderWidth: 2,
-    borderColor: COLORS.white,
-    justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 56,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
+  faixaNome: { marginTop: 10, fontSize: 20, fontWeight: '800', color: COLORS.white },
+  faixaEmail: { fontSize: 13, color: COLORS.onBlueMuted, marginTop: 2 },
   card: {
+    marginHorizontal: 20,
+    marginTop: -32,
     backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     paddingHorizontal: 20,

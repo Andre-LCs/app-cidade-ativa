@@ -181,7 +181,10 @@ router.get('/', autenticar, async (req, res) => {
       valores
     );
 
-    return res.status(200).json(result.rows);
+    // o app usa o limite para desenhar a barra de progresso da validação
+    return res.status(200).json(
+      result.rows.map((linha) => ({ ...linha, limite_validacao: LIMITE_VALIDACAO }))
+    );
   } catch (erro) {
     console.error(erro);
 

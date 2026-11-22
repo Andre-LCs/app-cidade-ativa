@@ -13,30 +13,12 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import logoImg from '@/assets/images/logo-projeto.png';
 // Importa a função de conexão com a API
 import { apiRequest } from '../services/api';
+import { COLORS } from '../theme';
 
-// DESIGN TOKENS (Cores oficiais do Cidade Ativa)
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  borderCard: '#F1F5F9',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  placeholder: '#94A3B8',
-  white: '#FFFFFF',
-  error: '#DC2626',
-  errorBackground: '#FEF2F2',
-  errorBorder: '#FECACA',
-  successBackground: '#F0FDF4',
-  successBorder: '#BBF7D0',
-};
 
 type StatusMessage = {
   tipo: 'sucesso' | 'erro';
@@ -112,7 +94,8 @@ export default function Cadastro() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} /> 
+      <Stack.Screen options={{ title: 'Criar conta' }} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"

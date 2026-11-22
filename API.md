@@ -249,7 +249,7 @@ Authorization: Bearer <token>
 
 **Parâmetro opcional (query):** `?minhas=true` retorna só as ocorrências do usuário autenticado (usado na tela "Minhas Ocorrências"). Sem o parâmetro, retorna todas.
 
-**Campos de validação:** `minha` (true se a ocorrência é do usuário autenticado), `confirmacoes` (votos "ainda está lá"), `votos_resolvida` (votos "já foi resolvido") e `meu_voto` (`AINDA_EXISTE`, `RESOLVIDA` ou `null`). Ocorrências com prazo de expiração (ex.: veículo em local proibido) passam a `EXPIRADA` ao serem listadas, se ficarem sem atividade além do prazo.
+**Campos de validação:** `minha` (true se a ocorrência é do usuário autenticado), `confirmacoes` (votos "ainda está lá"), `votos_resolvida` (votos "já foi resolvido") e `meu_voto` (`AINDA_EXISTE`, `RESOLVIDA` ou `null`). `limite_validacao` é o número de confirmações necessário para a ocorrência ficar validada (o app usa para a barra de progresso). Ocorrências com prazo de expiração (ex.: veículo em local proibido) passam a `EXPIRADA` ao serem listadas, se ficarem sem atividade além do prazo.
 
 **Retorna 200 (sucesso):**
 ```json

@@ -14,18 +14,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { API_URL } from '../services/api';
+import { COLORS } from '../theme';
 
-const COLORS = {
-  primaryBlue: '#1F3F77',
-  primaryGreen: '#32A041',
-  background: '#F8FAFC',
-  cardBackground: '#FFFFFF',
-  textPrimary: '#0F172A',
-  textSecondary: '#64748B',
-  inputBackground: '#F1F5F9',
-  border: '#E2E8F0',
-  white: '#FFFFFF',
-};
 
 function showAlert(title: string, message: string, onOk?: () => void) {
   if (Platform.OS === 'web') {
