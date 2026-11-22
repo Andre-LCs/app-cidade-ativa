@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router, useFocusEffect } from 'expo-router';
+import { Stack, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
+import BotaoTema from '../components/ui/BotaoTema';
 import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
-import { COLORS } from '../theme';
+import { useTheme, type Paleta } from '../theme';
 
 
 // Limites da validação pela comunidade. Mantenha iguais aos do back-end (routes/ocorrencias.js).
@@ -55,6 +56,10 @@ const PAGINA = `<!DOCTYPE html>
   html,body,#mapa{height:100%;margin:0;font-family:-apple-system,Roboto,Helvetica,Arial,sans-serif}
   .leaflet-control-attribution{font-size:9px}
   .leaflet-tile-pane{filter:saturate(.55) contrast(.95) brightness(1.05)}
+  .dark .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) saturate(.55) brightness(.92) contrast(.9)}
+  .dark .leaflet-container{background:#1b1f27}
+  .dark .chip{background:#1E293B;color:#E2E8F0}
+  .dark #card{background:#14284F}
   .leaflet-top.leaflet-left{top:52px}
   .pin-wrap{background:none;border:0}
   .pin{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid #fff;
@@ -93,6 +98,7 @@ const PAGINA = `<!DOCTYPE html>
   #botoes.ocupado{opacity:.55;pointer-events:none}
   #botoes button{flex:1;border:1.5px solid #fff;background:transparent;color:#fff;border-radius:10px;padding:10px 6px;font-size:13px;font-weight:700}
   #botoes button.sel{background:#fff;color:#1F3F77}
+  #bLogin{width:100%;border:1.5px solid #fff;background:#fff;color:#1F3F77;border-radius:10px;padding:11px 6px;font-size:13px;font-weight:700}
   #msg{font-size:12px;color:#FECACA;margin-top:6px}
   #st{border-radius:10px;padding:3px 9px;font-weight:700;color:#fff}
   #x{position:absolute;top:8px;right:12px;background:none;border:0;color:#fff;font-size:22px;line-height:1;padding:4px 8px}
@@ -116,6 +122,7 @@ const PAGINA = `<!DOCTYPE html>
         <button id="bAinda" type="button"></button>
         <button id="bRes" type="button"></button>
       </div>
+      <button id="bLogin" type="button" style="display:none">Entrar para validar</button>
       <div id="msg"></div>
     </div>
   </div>
@@ -125,6 +132,9 @@ const PAGINA = `<!DOCTYPE html>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 var DADOS = __DADOS__;
+var ESCURO = __ESCURO__;
+var VISITANTE = __VIS__;
+if (ESCURO) document.body.classList.add('dark');
 document.documentElement.style.setProperty('--safe', '__SAFE__px');
 
 var CATS = [
@@ -132,7 +142,10 @@ var CATS = [
   { k: 'ilumin',   nome: 'Iluminação',  cor: '#E8A100', svg: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>' },
   { k: 'lixo',     nome: 'Lixo',        cor: '#17A398', svg: '<path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/>' },
   { k: 'cal',      nome: 'Calçada',     cor: '#0B74C4', svg: '<path d="M4 6h16v12H4zM12 6l-2 4 3 2-2 6"/>' },
-  { k: 'veic',     nome: 'Veículo',     cor: '#7B61C9', svg: '<path d="M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>' }
+  { k: 'veic',     nome: 'Veículo',     cor: '#7B61C9', svg: '<path d="M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>' },
+  { k: 'terra',    nome: 'Rua de terra', cor: '#8A4B1E', svg: '<path d="M4 18c3-2 5-2 8 0s5 2 8 0M4 12c3-2 5-2 8 0s5 2 8 0"/>' },
+  { k: 'mato',     nome: 'Mato alto',   cor: '#5A8F29', svg: '<path d="M12 21V9M12 13c-4 0-6-3-6-7 4 0 6 3 6 7zM12 15c4 0 6-3 6-7-4 0-6 3-6 7z"/>' },
+  { k: 'descarte', nome: 'Descarte',    cor: '#64748B', svg: '<path d="M4 8h16l-1.5 12h-13zM9 8V5h6v3M8 12l8 4M16 12l-8 4"/>' }
 ];
 var PADRAO = { k: 'outro', nome: 'Outros', cor: '#1F3F77', svg: '<circle cx="12" cy="12" r="4"/>' };
 
@@ -141,6 +154,9 @@ function categoriaDe(nome) {
   var n = norm(nome);
   if (n.indexOf('buraco') >= 0) return CATS[0];
   if (n.indexOf('ilumin') >= 0) return CATS[1];
+  if (n.indexOf('descarte') >= 0) return CATS[7];
+  if (n.indexOf('terra') >= 0 || n.indexOf('erosao') >= 0) return CATS[5];
+  if (n.indexOf('mato') >= 0 || n.indexOf('baldio') >= 0) return CATS[6];
   if (n.indexOf('lixo') >= 0 || n.indexOf('entulho') >= 0) return CATS[2];
   if (n.indexOf('calcada') >= 0) return CATS[3];
   if (n.indexOf('veiculo') >= 0) return CATS[4];
@@ -197,7 +213,8 @@ function desenharVotos() {
   var o = atual.o;
   var encerrada = o.status === 'RESOLVIDA';
   var bA = document.getElementById('bAinda'), bR = document.getElementById('bRes');
-  document.getElementById('botoes').style.display = encerrada ? 'none' : 'flex';
+  document.getElementById('botoes').style.display = (encerrada || VISITANTE) ? 'none' : 'flex';
+  document.getElementById('bLogin').style.display = (VISITANTE && !encerrada) ? 'block' : 'none';
   bA.style.display = o.minha ? 'none' : 'block';
   bA.textContent = 'Ainda está lá (' + o.confirmacoes + ')';
   bR.textContent = o.minha ? 'Marcar como resolvida' : 'Já foi resolvido (' + o.votosRes + ')';
@@ -218,6 +235,7 @@ function votar(tipo) {
   enviar({ tipo: 'votar', id: atual.o.id, voto: tipo });
 }
 document.getElementById('bAinda').onclick = function () { votar('AINDA_EXISTE'); };
+document.getElementById('bLogin').onclick = function () { enviar({ tipo: 'login' }); };
 document.getElementById('bRes').onclick = function () { votar('RESOLVIDA'); };
 
 window.atualizarOcorrencia = function (r) {
@@ -230,6 +248,9 @@ window.atualizarOcorrencia = function (r) {
   it.m.setIcon(iconePara(o, it.cat));
   if (atual && atual.o.id === o.id) abrirCard(o, it.cat);
 };
+window.definirTema = function (escuro) {
+  document.body.classList.toggle('dark', !!escuro);
+};
 window.mostrarErro = function (m) {
   ocupado(false);
   document.getElementById('msg').textContent = m;
@@ -240,6 +261,7 @@ window.addEventListener('message', function (e) {
     if (m && m.tipo === 'atualizar') window.atualizarOcorrencia(m.dados);
     else if (m && m.tipo === 'erro') window.mostrarErro(m.msg);
     else if (m && m.tipo === 'tudo') window.atualizarTudo(m.dados);
+    else if (m && m.tipo === 'tema') window.definirTema(m.dados);
   } catch (_) {}
 });
 
@@ -369,20 +391,30 @@ function prepararDados(pontos: Ocorrencia[]) {
   }));
 }
 
-function montarHtml(pontos: Ocorrencia[], margemInferior: number) {
+function montarHtml(pontos: Ocorrencia[], margemInferior: number, escuro: boolean, visitante: boolean) {
   const json = JSON.stringify(prepararDados(pontos)).replace(/</g, '\\u003c');
 
   return PAGINA.replace('__DADOS__', () => json)
+    .replace('__ESCURO__', () => (escuro ? 'true' : 'false'))
+    .replace('__VIS__', () => (visitante ? 'true' : 'false'))
     .replace('__SAFE__', () => String(Math.round(margemInferior)))
     .replace('__LIM_VAL__', () => String(LIMITE_VALIDACAO))
     .replace('__LIM_RES__', () => String(LIMITE_RESOLVIDA));
 }
 
 export default function Mapa() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const insets = useSafeAreaInsets();
   const [html, setHtml] = useState('');
   const insetRef = useRef(0);
   insetRef.current = insets.bottom;
+  const escuroRef = useRef(escuro);
+  escuroRef.current = escuro;
+  const { visitante: visitanteParam } = useLocalSearchParams<{ visitante?: string }>();
+  const visitante = visitanteParam === '1';
+  const visitanteRef = useRef(visitante);
+  visitanteRef.current = visitante;
   const webViewRef = useRef<WebView>(null);
   const iframeRef = useRef<any>(null);
   const paginaProntaRef = useRef(false);
@@ -393,18 +425,20 @@ export default function Mapa() {
   // silencioso = atualização automática: com a página pronta, troca só os pinos que mudaram
   const carregar = useCallback(async (silencioso = false) => {
     setErro(null);
-    const token = await tokenStorage.getItem('token');
-    if (!token) {
+    const token = visitanteRef.current ? null : await tokenStorage.getItem('token');
+    if (!token && !visitanteRef.current) {
       router.replace('/login');
       return;
     }
     try {
-      const dados = await apiRequest('/ocorrencias', { headers: { Authorization: `Bearer ${token}` } });
+      const dados = token
+        ? await apiRequest('/ocorrencias', { headers: { Authorization: `Bearer ${token}` } })
+        : await apiRequest('/ocorrencias/publicas');
       if (silencioso && paginaProntaRef.current) {
         responderRef.current({ tipo: 'tudo', dados: prepararDados(dados) });
       } else {
         paginaProntaRef.current = false;
-        setHtml(montarHtml(dados, insetRef.current));
+        setHtml(montarHtml(dados, insetRef.current, escuroRef.current, visitanteRef.current));
       }
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Não foi possível carregar as ocorrências.');
@@ -421,13 +455,19 @@ export default function Mapa() {
 
   useAtualizacaoAutomatica(() => carregar(true));
 
-  const responder = useCallback((msg: { tipo: 'atualizar' | 'tudo'; dados: any } | { tipo: 'erro'; msg: string }) => {
+  // troca de tema com o mapa aberto: só muda a aparência, sem recarregar a página
+  useEffect(() => {
+    if (paginaProntaRef.current) responderRef.current({ tipo: 'tema', dados: escuro });
+  }, [escuro]);
+
+  const responder = useCallback((msg: { tipo: 'atualizar' | 'tudo' | 'tema'; dados: any } | { tipo: 'erro'; msg: string }) => {
     if (Platform.OS === 'web') {
       iframeRef.current?.contentWindow?.postMessage(JSON.stringify(msg), '*');
       return;
     }
     let chamada: string;
     if (msg.tipo === 'erro') chamada = `window.mostrarErro(${JSON.stringify(msg.msg)});`;
+    else if (msg.tipo === 'tema') chamada = `window.definirTema(${msg.dados ? 'true' : 'false'});`;
     else if (msg.tipo === 'tudo') chamada = `window.atualizarTudo(${JSON.stringify(msg.dados)});`;
     else chamada = `window.atualizarOcorrencia(${JSON.stringify(msg.dados)});`;
     webViewRef.current?.injectJavaScript(`${chamada} true;`);
@@ -441,6 +481,10 @@ export default function Mapa() {
       try {
         m = JSON.parse(texto);
       } catch {
+        return;
+      }
+      if (m?.tipo === 'login') {
+        router.replace('/login');
         return;
       }
       if (m?.tipo !== 'votar') return;
@@ -483,6 +527,7 @@ export default function Mapa() {
           headerStyle: { backgroundColor: COLORS.primaryBlue },
           headerTintColor: COLORS.white,
           headerTitleStyle: { fontWeight: '700' },
+          headerRight: () => <BotaoTema tamanho={24} />,
         }}
       />
 
@@ -524,7 +569,7 @@ export default function Mapa() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   mapa: { flex: 1 },

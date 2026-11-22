@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,9 +12,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import { API_URL } from '../services/api';
-import { COLORS } from '../theme';
+import { useTheme, type Paleta } from '../theme';
+import FundoHorizonte from '../components/ui/FundoHorizonte';
 
 
 function showAlert(title: string, message: string, onOk?: () => void) {
@@ -40,6 +41,8 @@ async function chamarApi(endpoint: string, corpo: object) {
 }
 
 export default function RecuperarSenha() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   // etapa 1: pedir o código por e-mail; etapa 2: informar o código e a nova senha
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
@@ -104,7 +107,7 @@ export default function RecuperarSenha() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <Stack.Screen options={{ title: 'Recuperar senha' }} />
+      <FundoHorizonte />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.title}>
@@ -124,7 +127,7 @@ export default function RecuperarSenha() {
                 <TextInput
                   style={styles.input}
                   placeholder="exemplo@email.com"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={COLORS.placeholder}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -158,7 +161,7 @@ export default function RecuperarSenha() {
                 <TextInput
                   style={styles.input}
                   placeholder="000000"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={COLORS.placeholder}
                   keyboardType="number-pad"
                   maxLength={6}
                   value={codigo}
@@ -172,7 +175,7 @@ export default function RecuperarSenha() {
                 <TextInput
                   style={styles.input}
                   placeholder="Mínimo de 6 caracteres"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={COLORS.placeholder}
                   secureTextEntry={!senhaVisivel}
                   value={novaSenha}
                   onChangeText={setNovaSenha}
@@ -192,7 +195,7 @@ export default function RecuperarSenha() {
                 <TextInput
                   style={styles.input}
                   placeholder="Repita a nova senha"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={COLORS.placeholder}
                   secureTextEntry={!senhaVisivel}
                   value={confirmar}
                   onChangeText={setConfirmar}
@@ -227,7 +230,7 @@ export default function RecuperarSenha() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   card: {
@@ -240,7 +243,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: COLORS.borderCard,
   },
   title: { fontSize: 22, fontWeight: '800', color: COLORS.primaryBlue, marginBottom: 4 },
   subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },

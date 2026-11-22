@@ -1,11 +1,11 @@
 // Tema central do app (direção visual A: azul institucional + verde de ação).
 //
-// Todas as telas importam as cores daqui. Para um futuro tema escuro, basta criar uma
-// segunda paleta com as mesmas chaves e escolher qual usar.
+// LIGHT e DARK têm as mesmas chaves. As telas pegam a paleta ativa com `useTheme()`
+// (ver ThemeProvider.tsx) e montam os estilos com ela.
 import type { ComponentProps } from 'react';
 import type { Ionicons } from '@expo/vector-icons';
 
-export const COLORS = {
+export const LIGHT = {
   // marca
   primaryBlue: '#1F3F77',
   primaryBlueDark: '#14305F',
@@ -37,19 +37,66 @@ export const COLORS = {
   successBorder: '#BBF7D0',
 };
 
+export type Paleta = typeof LIGHT;
+
+export const DARK: Paleta = {
+  primaryBlue: '#2F5DAF',
+  primaryBlueDark: '#1F3F77',
+  primaryBlueLight: '#4A78CC',
+  primaryGreen: '#25883A',
+  logoGreen: '#32A041',
+
+  background: '#0B1220',
+  cardBackground: '#131C2E',
+  inputBackground: '#1A2438',
+  border: '#263248',
+  borderCard: '#1E2A40',
+  borderFocused: '#6F9BE6',
+
+  textPrimary: '#E6EDF7',
+  textSecondary: '#9AA8BD',
+  placeholder: '#6B7A92',
+  white: '#FFFFFF',
+  onBlueMuted: '#D6E2F5',
+  onBlueTint: 'rgba(255,255,255,0.14)',
+
+  error: '#F87171',
+  errorBackground: '#3A1517',
+  errorBorder: '#7F1D1D',
+  successBackground: '#0F2A1A',
+  successBorder: '#14532D',
+};
+
+// compatibilidade: paleta clara como padrão
+export const COLORS = LIGHT;
+
 type IconeNome = ComponentProps<typeof Ionicons>['name'];
 
 // Status da ocorrência: texto, cor do texto e fundo do selo.
-export const STATUS: Record<string, { label: string; cor: string; fundo: string }> = {
-  ABERTA: { label: 'Aberta', cor: '#1F3F77', fundo: '#E8EEF8' },
-  EM_VALIDACAO: { label: 'Em validação', cor: '#92400E', fundo: '#FEF3C7' },
-  VALIDADA: { label: 'Validada', cor: '#166534', fundo: '#DCFCE7' },
-  ENVIADA_PREFEITURA: { label: 'Enviada ao órgão responsável', cor: '#1F3F77', fundo: '#E8EEF8' },
-  EM_ATENDIMENTO: { label: 'Em atendimento', cor: '#92400E', fundo: '#FEF3C7' },
-  RESOLVIDA: { label: 'Resolvida', cor: '#166534', fundo: '#DCFCE7' },
-  EXPIRADA: { label: 'Expirada', cor: '#5B6B82', fundo: '#F1F5F9' },
-  DUPLICADA: { label: 'Duplicada', cor: '#5B6B82', fundo: '#F1F5F9' },
+export const STATUS: Record<string, { label: string; cor: string; fundo: string; icone: IconeNome }> = {
+  ABERTA: { label: 'Aberta', cor: '#1F3F77', fundo: '#E8EEF8', icone: 'radio-button-on-outline' },
+  EM_VALIDACAO: { label: 'Em validação', cor: '#92400E', fundo: '#FEF3C7', icone: 'people-outline' },
+  VALIDADA: { label: 'Validada', cor: '#166534', fundo: '#DCFCE7', icone: 'shield-checkmark-outline' },
+  ENVIADA_PREFEITURA: { label: 'Enviada ao órgão', cor: '#1F3F77', fundo: '#E8EEF8', icone: 'paper-plane-outline' },
+  EM_ATENDIMENTO: { label: 'Em atendimento', cor: '#92400E', fundo: '#FEF3C7', icone: 'construct-outline' },
+  RESOLVIDA: { label: 'Resolvida', cor: '#166534', fundo: '#DCFCE7', icone: 'checkmark-circle-outline' },
+  EXPIRADA: { label: 'Expirada', cor: '#5B6B82', fundo: '#F1F5F9', icone: 'time-outline' },
+  DUPLICADA: { label: 'Duplicada', cor: '#5B6B82', fundo: '#F1F5F9', icone: 'copy-outline' },
+  CANCELADA: { label: 'Cancelada', cor: '#5B6B82', fundo: '#F1F5F9', icone: 'close-circle-outline' },
 };
+
+// mistura a cor com branco (f = 0..1) para ter texto legível sobre fundo escuro
+function clarear(hex: string, f: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * f));
+  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+// versão do par cor/fundo para o tema escuro: texto clareado, fundo = cor original translúcida
+export function paraEscuro<T extends { cor: string; fundo: string }>(v: T, escuro: boolean): T {
+  if (!escuro) return v;
+  return { ...v, cor: clarear(v.cor, 0.45), fundo: v.cor + '33' };
+}
 
 export type CategoriaVisual = { icone: IconeNome; cor: string; fundo: string };
 
@@ -60,6 +107,9 @@ function semAcento(texto: string) {
 // Ícone e cores de cada categoria (mesmas famílias de cor dos pinos do mapa).
 export function categoriaVisual(nome: string): CategoriaVisual {
   const n = semAcento(nome || '');
+  if (n.includes('descarte')) return { icone: 'trash-bin-outline', cor: '#475569', fundo: '#E2E8F0' };
+  if (n.includes('terra') || n.includes('erosao')) return { icone: 'trail-sign-outline', cor: '#8A4B1E', fundo: '#FBE8D5' };
+  if (n.includes('mato') || n.includes('baldio')) return { icone: 'leaf-outline', cor: '#3F6B1F', fundo: '#E4F2D6' };
   if (n.includes('buraco')) return { icone: 'warning-outline', cor: '#C2410C', fundo: '#FFEDD5' };
   if (n.includes('ilumin')) return { icone: 'bulb-outline', cor: '#B45309', fundo: '#FEF3C7' };
   if (n.includes('lixo') || n.includes('entulho')) return { icone: 'trash-outline', cor: '#0F766E', fundo: '#CCFBF1' };
@@ -79,3 +129,5 @@ export function iniciais(nome?: string | null) {
   const b = partes.length > 1 ? partes[partes.length - 1][0] : '';
   return (a + b).toUpperCase();
 }
+
+export { ThemeProvider, useTheme } from './ThemeProvider';

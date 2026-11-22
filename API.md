@@ -281,6 +281,14 @@ Authorization: Bearer <token>
 
 ---
 
+## GET /ocorrencias/publicas
+
+Listagem **sem autenticação**, usada pelo modo "explorar o mapa sem conta" (somente leitura).
+Traz os mesmos campos de `GET /ocorrencias`, mas `foto_url` é sempre `null`, `minha` é `false`,
+`meu_voto` é `null` e não há dados do autor. Ocorrências canceladas não aparecem.
+
+`GET /ocorrencias/versao` também é público (devolve só um identificador de mudança, sem dados).
+
 ## GET /ocorrencias/versao
 
 Resposta leve para o app saber se algo mudou sem baixar a lista inteira (usada a cada ~20 s com a tela aberta).

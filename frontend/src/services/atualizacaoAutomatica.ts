@@ -26,10 +26,8 @@ export function useAtualizacaoAutomatica(recarregar: () => Promise<void> | void)
     ocupadoRef.current = true;
     try {
       const token = await tokenStorage.getItem('token');
-      if (!token) return;
-
       const { versao } = await apiRequest('/ocorrencias/versao', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       // A primeira consulta só marca o ponto de partida; depois, qualquer mudança recarrega.

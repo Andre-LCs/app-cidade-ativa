@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,11 +13,12 @@ import {
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import logoImg from '@/assets/images/logo-projeto.png';
 // Importa a função de conexão com a API
 import { apiRequest } from '../services/api';
-import { COLORS } from '../theme';
+import { useTheme, type Paleta } from '../theme';
+import FundoHorizonte from '../components/ui/FundoHorizonte';
 
 
 type StatusMessage = {
@@ -26,6 +27,8 @@ type StatusMessage = {
 };
 
 export default function Cadastro() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -94,8 +97,8 @@ export default function Cadastro() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <Stack.Screen options={{ title: 'Criar conta' }} />
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
+      <FundoHorizonte />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -281,7 +284,7 @@ export default function Cadastro() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -378,7 +381,7 @@ const styles = StyleSheet.create({
   },
   inputWrapperFocused: {
     borderColor: COLORS.primaryBlue,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
   },
   inputIcon: {
     marginRight: 8,

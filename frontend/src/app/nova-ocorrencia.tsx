@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -13,13 +13,13 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { apiRequest } from '../services/api';
 import { uploadImagem } from '../services/cloudinary';
 import * as tokenStorage from '../services/tokenStorage';
-import { COLORS } from '../theme';
+import { useTheme, type Paleta } from '../theme';
 
 
 type Categoria = { id: number; nome: string; descricao: string | null };
@@ -42,6 +42,8 @@ function textoDoErro(error: any) {
 }
 
 export default function NovaOcorrencia() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const isWeb = Platform.OS === 'web';
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -236,7 +238,6 @@ export default function NovaOcorrencia() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <Stack.Screen options={{ title: 'Nova ocorrência' }} />
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
 
       <ScrollView
@@ -448,7 +449,7 @@ export default function NovaOcorrencia() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scrollContainer: { flexGrow: 1, paddingHorizontal: 20, paddingVertical: 16 },
   card: {
@@ -506,7 +507,7 @@ const styles = StyleSheet.create({
     height: 44,
   },
   inputWrapperMultiline: { height: 90, alignItems: 'flex-start', paddingVertical: 8 },
-  inputWrapperFocused: { borderColor: COLORS.primaryBlue, backgroundColor: COLORS.white },
+  inputWrapperFocused: { borderColor: COLORS.primaryBlue, backgroundColor: COLORS.cardBackground },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, color: COLORS.textPrimary, fontSize: 14, height: '100%' },
   inputMultiline: { width: '100%' },
@@ -521,7 +522,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: COLORS.primaryBlue,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
   },
   botaoSecundarioTexto: { color: COLORS.primaryBlue, fontSize: 14, fontWeight: '700' },
   preview: { width: '100%', height: 200, borderRadius: 10, backgroundColor: COLORS.inputBackground },

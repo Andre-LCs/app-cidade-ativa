@@ -121,7 +121,7 @@ async function expirarVencidas() {
 // GET /ocorrencias/versao
 // Resposta leve usada pelo app para saber se algo mudou (nova ocorrência, voto, cancelamento,
 // mudança de status). O app só recarrega a lista quando este valor muda.
-router.get('/versao', autenticar, async (req, res) => {
+router.get('/versao', async (req, res) => {
   try {
     await expirarVencidas();
 
@@ -139,6 +139,43 @@ router.get('/versao', autenticar, async (req, res) => {
     return res.status(500).json({
       erro: 'erro interno do servidor'
     });
+  }
+});
+
+// GET /ocorrencias/publicas
+// Listagem aberta para o modo "explorar o mapa sem conta": só leitura, sem login.
+// Não expõe foto, autor nem voto individual; traz apenas o necessário para desenhar o mapa.
+router.get('/publicas', async (req, res) => {
+  try {
+    await expirarVencidas();
+
+    const result = await pool.query(
+      `SELECT o.id, c.nome AS categoria_nome, o.titulo, o.descricao,
+              ST_Y(o.localizacao::geometry) AS latitude,
+              ST_X(o.localizacao::geometry) AS longitude,
+              o.status, o.criado_em,
+              (SELECT COUNT(*)::int FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.tipo = 'AINDA_EXISTE') AS confirmacoes,
+              (SELECT COUNT(*)::int FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.tipo = 'RESOLVIDA') AS votos_resolvida
+       FROM ocorrencias o
+       JOIN categorias c ON c.id = o.categoria_id
+       WHERE o.status <> 'CANCELADA'
+       ORDER BY o.criado_em DESC, o.id DESC`
+    );
+
+    return res.status(200).json(
+      result.rows.map((linha) => ({
+        ...linha,
+        foto_url: null,
+        minha: false,
+        meu_voto: null,
+        limite_validacao: LIMITE_VALIDACAO,
+      }))
+    );
+  } catch (erro) {
+    console.error(erro);
+    return res.status(500).json({ erro: 'erro interno do servidor' });
   }
 });
 

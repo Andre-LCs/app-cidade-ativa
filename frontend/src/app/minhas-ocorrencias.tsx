@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Alert,
   Image,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,7 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
 import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
-import { COLORS, STATUS, categoriaVisual, primeiroNome } from '../theme';
+import { STATUS, categoriaVisual, paraEscuro, primeiroNome, useTheme, type Paleta } from '../theme';
+import BotaoTema from '../components/ui/BotaoTema';
+import FundoHorizonte from '../components/ui/FundoHorizonte';
 
 
 type Ocorrencia = {
@@ -45,6 +48,8 @@ function formatarData(iso: string) {
 }
 
 export default function MinhasOcorrencias() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const insets = useSafeAreaInsets();
   const [itens, setItens] = useState<Ocorrencia[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -141,8 +146,8 @@ export default function MinhasOcorrencias() {
   };
 
   const renderItem = ({ item }: { item: Ocorrencia }) => {
-    const st = STATUS[item.status] ?? { label: item.status, cor: COLORS.textSecondary, fundo: COLORS.inputBackground };
-    const cat = categoriaVisual(item.categoria_nome);
+    const st = paraEscuro(STATUS[item.status] ?? { label: item.status, cor: COLORS.textSecondary, fundo: COLORS.inputBackground, icone: 'ellipse-outline' as const }, escuro);
+    const cat = paraEscuro(categoriaVisual(item.categoria_nome), escuro);
     const limite = item.limite_validacao ?? 3;
     const confirmacoes = item.confirmacoes ?? 0;
     const resolvida = item.status === 'RESOLVIDA';
@@ -152,7 +157,7 @@ export default function MinhasOcorrencias() {
     const progresso = resolvida || !emValidacao ? 1 : Math.min(confirmacoes, limite) / limite;
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, encerrada && { opacity: 0.7 }]}>
         {item.foto_url ? (
           <Image source={{ uri: miniatura(item.foto_url) }} style={styles.thumb} resizeMode="cover" />
         ) : (
@@ -172,7 +177,8 @@ export default function MinhasOcorrencias() {
           </View>
 
           <View style={styles.cardRodape}>
-            <View style={[styles.badge, { backgroundColor: st.fundo }]}>
+            <View style={[styles.badge, { backgroundColor: st.fundo, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+              <Ionicons name={st.icone} size={12} color={st.cor} />
               <Text style={[styles.badgeTexto, { color: st.cor }]}>{st.label}</Text>
             </View>
             {!encerrada && (
@@ -213,9 +219,34 @@ export default function MinhasOcorrencias() {
   const saudacao = primeiroNome(nome);
 
   const cabecalho = (
-    <View style={styles.faixa}>
-      <Text style={styles.saudacao}>{saudacao ? `Oi, ${saudacao}!` : 'Oi!'}</Text>
-      <Text style={styles.saudacaoSub}>Veja suas ocorrências</Text>
+    <View style={[styles.faixa, { paddingTop: insets.top + 14 }]}>
+      <View style={styles.faixaTopo}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.saudacao} numberOfLines={1}>
+            {saudacao ? `Oi, ${saudacao}!` : 'Oi!'}
+          </Text>
+          <Text style={styles.saudacaoSub}>Veja suas ocorrências!</Text>
+        </View>
+        <View style={styles.acoes}>
+          <BotaoTema style={styles.botaoIcone} />
+          <TouchableOpacity
+            style={styles.botaoIcone}
+            activeOpacity={0.7}
+            onPress={() => router.push('/mapa')}
+            accessibilityLabel="Abrir mapa de ocorrências"
+          >
+            <Ionicons name="map-outline" size={28} color={COLORS.white} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.botaoIcone}
+            activeOpacity={0.7}
+            onPress={() => router.push('/perfil')}
+            accessibilityLabel="Abrir perfil"
+          >
+            <Ionicons name="person-outline" size={28} color={COLORS.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
       <View style={styles.resumo}>
         <View style={styles.resumoItem}>
           <Text style={styles.resumoNumero}>{itens.length}</Text>
@@ -235,23 +266,13 @@ export default function MinhasOcorrencias() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: 'Minhas ocorrências',
-          headerBackVisible: false,
-          headerRight: () => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <TouchableOpacity onPress={() => router.push('/mapa')} accessibilityLabel="Abrir mapa de ocorrências">
-                <Ionicons name="map-outline" size={26} color={COLORS.white} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/perfil')} accessibilityLabel="Abrir perfil">
-                <Ionicons name="person-circle-outline" size={28} color={COLORS.white} />
-              </TouchableOpacity>
-            </View>
-          ),
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
 
+      {cabecalho}
+
+      <View style={{ flex: 1 }}>
+        <FundoHorizonte />
       {erro && (
         <View style={styles.banner}>
           <Ionicons name="alert-circle-outline" size={18} color={COLORS.error} />
@@ -268,7 +289,6 @@ export default function MinhasOcorrencias() {
           data={itens}
           keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
-          ListHeaderComponent={cabecalho}
           contentContainerStyle={styles.lista}
           refreshing={atualizando}
           onRefresh={aoPuxarParaAtualizar}
@@ -285,6 +305,7 @@ export default function MinhasOcorrencias() {
           }
         />
       )}
+      </View>
 
         <View style={[styles.rodape, { paddingBottom: 16 + insets.bottom }]}>
         <TouchableOpacity
@@ -300,20 +321,28 @@ export default function MinhasOcorrencias() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  lista: { paddingBottom: 8, flexGrow: 1 },
+  lista: { paddingTop: 16, paddingBottom: 8, flexGrow: 1 },
   faixa: {
     backgroundColor: COLORS.primaryBlue,
     paddingHorizontal: 20,
-    paddingTop: 4,
     paddingBottom: 22,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    marginBottom: 16,
   },
-  saudacao: { fontSize: 24, fontWeight: '800', color: COLORS.white },
+  faixaTopo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  acoes: { flexDirection: 'row', gap: 10 },
+  botaoIcone: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.onBlueTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saudacao: { fontSize: 26, fontWeight: '800', color: COLORS.white },
   saudacaoSub: { fontSize: 14, color: COLORS.onBlueMuted, marginTop: 2 },
   resumo: { flexDirection: 'row', gap: 10, marginTop: 16 },
   resumoItem: { flex: 1, backgroundColor: COLORS.onBlueTint, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 12 },

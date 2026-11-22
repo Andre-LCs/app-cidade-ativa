@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,11 +14,12 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as tokenStorage from '../services/tokenStorage';
 import { API_URL } from '../services/api';
-import { COLORS } from '../theme';
+import BotaoTema from '../components/ui/BotaoTema';
+import { useTheme, type Paleta } from '../theme';
 
 
 
@@ -31,6 +32,8 @@ function showAlert(title: string, message: string) {
 }
 
 export default function Login() {
+  const { colors: COLORS, escuro } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -91,9 +94,9 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
 
+      <BotaoTema style={[styles.botaoTema, { top: insets.top + 10 }]} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
@@ -207,15 +210,27 @@ export default function Login() {
           >
             <Text style={styles.registerButtonText}>Criar conta</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.explorar}
+            activeOpacity={0.7}
+            onPress={() => router.push('/mapa?visitante=1')}
+          >
+            <Ionicons name="map-outline" size={18} color={COLORS.primaryBlue} />
+            <Text style={styles.explorarTexto}>Explorar o mapa sem conta</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primaryBlue },
   scroll: { flexGrow: 1 },
+  botaoTema: { position: 'absolute', right: 16, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.onBlueTint, alignItems: 'center', justifyContent: 'center' },
+  explorar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 18, paddingVertical: 8 },
+  explorarTexto: { color: COLORS.primaryBlue, fontSize: 14, fontWeight: '700' },
   hero: {
     backgroundColor: COLORS.primaryBlue,
     alignItems: 'center',
@@ -283,7 +298,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 50,
   },
-  inputWrapperFocused: { borderColor: COLORS.borderFocused, backgroundColor: COLORS.white },
+  inputWrapperFocused: { borderColor: COLORS.borderFocused, backgroundColor: COLORS.cardBackground },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, color: COLORS.textPrimary, fontSize: 14, height: '100%' },
   eyeIcon: { padding: 6 },
@@ -308,7 +323,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: COLORS.primaryGreen,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
     justifyContent: 'center',
     alignItems: 'center',
   },

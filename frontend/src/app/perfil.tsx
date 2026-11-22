@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,10 +13,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
-import { COLORS, iniciais } from '../theme';
+import { iniciais, useTheme, type Paleta } from '../theme';
+import FundoHorizonte from '../components/ui/FundoHorizonte';
 
 
 type StatusMessage = {
@@ -25,6 +26,8 @@ type StatusMessage = {
 };
 
 export default function Perfil() {
+  const { colors: COLORS } = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [nomeExibido, setNomeExibido] = useState('');
@@ -181,8 +184,8 @@ export default function Perfil() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <Stack.Screen options={{ title: 'Perfil' }} />
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBlue} />
+      <FundoHorizonte />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
@@ -356,7 +359,7 @@ export default function Perfil() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   loadingContainer: { flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
   scrollContainer: { flexGrow: 1, paddingBottom: 24 },
@@ -426,7 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: 44,
   },
-  inputWrapperFocused: { borderColor: COLORS.primaryBlue, backgroundColor: COLORS.white },
+  inputWrapperFocused: { borderColor: COLORS.primaryBlue, backgroundColor: COLORS.cardBackground },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, color: COLORS.textPrimary, fontSize: 14, height: '100%' },
   primaryButton: {
