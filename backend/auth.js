@@ -13,8 +13,9 @@
 // Depende da variável JWT_SECRET no .env.
 
 const jwt = require('jsonwebtoken');
+const pool = require('./db/pool');
 
-function autenticar(req, res, next) {
+async function autenticar(req, res, next) {
   const header = req.headers.authorization;
 
   if (!header) {
@@ -42,6 +43,23 @@ function autenticar(req, res, next) {
     //   process.env.JWT_SECRET,
     //   { expiresIn: '7d' }
     // )
+
+    // Confere no banco: a conta ainda existe? A senha foi trocada depois que este
+    // token foi emitido? (nesse caso o token deixa de valer em todos os aparelhos)
+    const resultado = await pool.query(
+      'SELECT senha_alterada_em, excluido_em FROM usuarios WHERE id = $1',
+      [payload.usuarioId]
+    );
+
+    if (resultado.rows.length === 0 || resultado.rows[0].excluido_em) {
+      return res.status(401).json({ erro: 'não autorizado' });
+    }
+
+    const { senha_alterada_em } = resultado.rows[0];
+
+    if (senha_alterada_em && payload.iat < Math.floor(new Date(senha_alterada_em).getTime() / 1000)) {
+      return res.status(401).json({ erro: 'não autorizado' });
+    }
 
     req.usuarioId = payload.usuarioId;
 

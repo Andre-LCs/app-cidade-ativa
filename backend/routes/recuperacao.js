@@ -100,7 +100,7 @@ router.post('/redefinir-senha', async (req, res) => {
 
   try {
     const usuario = await pool.query(
-      'SELECT id FROM usuarios WHERE lower(email) = lower($1)',
+      'SELECT id, senha_hash FROM usuarios WHERE lower(email) = lower($1)',
       [String(email).trim()]
     );
 
@@ -109,6 +109,7 @@ router.post('/redefinir-senha', async (req, res) => {
     }
 
     const usuarioId = usuario.rows[0].id;
+    const senhaHashAtual = usuario.rows[0].senha_hash;
 
     const pedido = await pool.query(
       `SELECT id, codigo_hash, tentativas
@@ -140,13 +141,18 @@ router.post('/redefinir-senha', async (req, res) => {
       return res.status(400).json(erroCodigo);
     }
 
+    // a nova senha não pode ser igual à atual (o código continua válido para outra tentativa)
+    if (await bcrypt.compare(String(nova_senha), senhaHashAtual)) {
+      return res.status(400).json({ erro: 'a nova senha deve ser diferente da atual' });
+    }
+
     const senhaHash = await bcrypt.hash(String(nova_senha), 10);
     const cliente = await pool.connect();
 
     try {
       await cliente.query('BEGIN');
       await cliente.query(
-        'UPDATE usuarios SET senha_hash = $1, atualizado_em = CURRENT_TIMESTAMP WHERE id = $2',
+        'UPDATE usuarios SET senha_hash = $1, senha_alterada_em = CURRENT_TIMESTAMP, atualizado_em = CURRENT_TIMESTAMP WHERE id = $2',
         [senhaHash, usuarioId]
       );
       await cliente.query(

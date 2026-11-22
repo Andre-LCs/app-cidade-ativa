@@ -397,3 +397,19 @@ Corpo: `{ "email": "usuario@email.com", "codigo": "123456", "nova_senha": "minha
 - `400`: campos ausentes, senha com menos de 6 caracteres, código inválido ou expirado, ou mais de 5 tentativas erradas (é preciso pedir novo código).
 
 O envio de e-mail usa HTTPS (o plano gratuito do Render bloqueia SMTP). Variáveis de ambiente do back-end: `EMAIL_WEBHOOK_URL` e `EMAIL_WEBHOOK_SEGREDO` (relay em Google Apps Script que envia pelo Gmail; código em `docs/apps-script-email.gs`).
+
+## Exclusão de conta
+
+### DELETE /usuario/me
+Exclui a conta do usuário autenticado (anonimização). Header `Authorization: Bearer <token>`.
+
+Body: `{ "senha": "..." }`
+
+- 200: `{ "mensagem": "conta excluída com sucesso" }`
+- 400: senha não informada
+- 401: senha incorreta ou token inválido
+
+Nome, e-mail e senha são substituídos (a conta não consegue mais entrar) e os códigos de recuperação são apagados. As ocorrências e os votos permanecem, sem autor identificável.
+
+### Tokens e troca de senha
+Ao redefinir a senha (ou excluir a conta), os tokens emitidos antes passam a ser rejeitados (401) em todos os aparelhos. `/redefinir-senha` também recusa uma nova senha igual à atual (400).
