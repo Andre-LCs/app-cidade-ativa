@@ -11,10 +11,5 @@ INSERT INTO categorias (nome, descricao, tempo_expiracao) VALUES
     'Mato alto ou terreno baldio',
     'Mato alto, terreno abandonado ou foco de sujeira em lote vazio',
     NULL
-),
-(
-    'Descarte irregular',
-    'Descarte de entulho, restos de poda ou resíduos em terrenos, beira de estrada e áreas abertas',
-    NULL
 )
 ON CONFLICT (nome) DO NOTHING;

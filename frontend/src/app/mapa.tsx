@@ -144,8 +144,7 @@ var CATS = [
   { k: 'cal',      nome: 'Calçada',     cor: '#0B74C4', svg: '<path d="M4 6h16v12H4zM12 6l-2 4 3 2-2 6"/>' },
   { k: 'veic',     nome: 'Veículo',     cor: '#7B61C9', svg: '<path d="M4 16v-4l2-5h12l2 5v4zM4 16v2M20 16v2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>' },
   { k: 'terra',    nome: 'Rua de terra', cor: '#8A4B1E', svg: '<path d="M4 18c3-2 5-2 8 0s5 2 8 0M4 12c3-2 5-2 8 0s5 2 8 0"/>' },
-  { k: 'mato',     nome: 'Mato alto',   cor: '#5A8F29', svg: '<path d="M12 21V9M12 13c-4 0-6-3-6-7 4 0 6 3 6 7zM12 15c4 0 6-3 6-7-4 0-6 3-6 7z"/>' },
-  { k: 'descarte', nome: 'Descarte',    cor: '#64748B', svg: '<path d="M4 8h16l-1.5 12h-13zM9 8V5h6v3M8 12l8 4M16 12l-8 4"/>' }
+  { k: 'mato',     nome: 'Mato alto',   cor: '#5A8F29', svg: '<path d="M12 21V9M12 13c-4 0-6-3-6-7 4 0 6 3 6 7zM12 15c4 0 6-3 6-7-4 0-6 3-6 7z"/>' }
 ];
 var PADRAO = { k: 'outro', nome: 'Outros', cor: '#1F3F77', svg: '<circle cx="12" cy="12" r="4"/>' };
 
@@ -154,7 +153,6 @@ function categoriaDe(nome) {
   var n = norm(nome);
   if (n.indexOf('buraco') >= 0) return CATS[0];
   if (n.indexOf('ilumin') >= 0) return CATS[1];
-  if (n.indexOf('descarte') >= 0) return CATS[7];
   if (n.indexOf('terra') >= 0 || n.indexOf('erosao') >= 0) return CATS[5];
   if (n.indexOf('mato') >= 0 || n.indexOf('baldio') >= 0) return CATS[6];
   if (n.indexOf('lixo') >= 0 || n.indexOf('entulho') >= 0) return CATS[2];

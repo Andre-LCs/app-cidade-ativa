@@ -107,7 +107,6 @@ function semAcento(texto: string) {
 // Ícone e cores de cada categoria (mesmas famílias de cor dos pinos do mapa).
 export function categoriaVisual(nome: string): CategoriaVisual {
   const n = semAcento(nome || '');
-  if (n.includes('descarte')) return { icone: 'trash-bin-outline', cor: '#475569', fundo: '#E2E8F0' };
   if (n.includes('terra') || n.includes('erosao')) return { icone: 'trail-sign-outline', cor: '#8A4B1E', fundo: '#FBE8D5' };
   if (n.includes('mato') || n.includes('baldio')) return { icone: 'leaf-outline', cor: '#3F6B1F', fundo: '#E4F2D6' };
   if (n.includes('buraco')) return { icone: 'warning-outline', cor: '#C2410C', fundo: '#FFEDD5' };
