@@ -19,21 +19,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as tokenStorage from '../services/tokenStorage';
 import { API_URL } from '../services/api';
 import BotaoTema from '../components/ui/BotaoTema';
+import { useAvisos } from '../components/ui/Avisos';
 import { useTheme, type Paleta } from '../theme';
 
 
 
-function showAlert(title: string, message: string) {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`);
-  } else {
-    Alert.alert(title, message);
-  }
-}
-
 export default function Login() {
   const { colors: COLORS, escuro } = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { toast } = useAvisos();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,7 +40,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      showAlert('Atenção', 'E-mail e senha são obrigatórios.');
+      toast('E-mail e senha são obrigatórios.', 'erro');
       return;
     }
 
@@ -73,17 +67,17 @@ export default function Login() {
         await tokenStorage.setItem('usuario', JSON.stringify(data.usuario));
         console.log('Token salvo com sucesso.');
 
-        showAlert('Sucesso', `Bem-vindo(a), ${data.usuario.nome}!`);
+        toast(`Bem-vindo(a), ${data.usuario.nome}!`, 'sucesso');
         router.replace('/minhas-ocorrencias');
         
 
       } else {
         // HTTP 400 ou 401 - Erro tratado pelo backend
-        showAlert('Falha no Login', data.erro);
+        toast(data.erro || 'Não foi possível entrar.', 'erro');
       }
     } catch (error) {
       console.error('Erro na requisição:', error);
-      showAlert('Erro', 'Não foi possível conectar ao servidor. Verifique sua internet ou se o backend está rodando no IP correto.');
+      toast('Não foi possível conectar ao servidor. Verifique sua internet e tente de novo.', 'erro');
     } finally {
       setIsLoading(false);
     }

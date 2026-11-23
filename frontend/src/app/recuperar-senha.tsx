@@ -14,18 +14,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { API_URL } from '../services/api';
+import { useAvisos } from '../components/ui/Avisos';
 import { useTheme, type Paleta } from '../theme';
 import FundoHorizonte from '../components/ui/FundoHorizonte';
 
-
-function showAlert(title: string, message: string, onOk?: () => void) {
-  if (Platform.OS === 'web') {
-    window.alert(`${title}\n\n${message}`);
-    onOk?.();
-  } else {
-    Alert.alert(title, message, [{ text: 'OK', onPress: onOk }]);
-  }
-}
 
 async function chamarApi(endpoint: string, corpo: object) {
   const resposta = await fetch(`${API_URL}${endpoint}`, {
@@ -43,6 +35,7 @@ async function chamarApi(endpoint: string, corpo: object) {
 export default function RecuperarSenha() {
   const { colors: COLORS, escuro } = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { toast, aviso } = useAvisos();
   // etapa 1: pedir o código por e-mail; etapa 2: informar o código e a nova senha
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
@@ -54,19 +47,19 @@ export default function RecuperarSenha() {
 
   const pedirCodigo = async () => {
     if (!email.trim()) {
-      showAlert('Atenção', 'Informe o e-mail da sua conta.');
+      toast('Informe o e-mail da sua conta.', 'erro');
       return;
     }
     setCarregando(true);
     try {
       await chamarApi('/recuperar-senha', { email: email.trim() });
       setEtapa(2);
-      showAlert(
+      aviso(
         'Verifique seu e-mail',
         'Se o e-mail estiver cadastrado, enviamos um código de 6 dígitos. Ele vale por 15 minutos. Confira também a caixa de spam.'
       );
     } catch (erro: any) {
-      showAlert('Erro', erro.message || 'Não foi possível conectar ao servidor.');
+      toast(erro.message || 'Não foi possível conectar ao servidor.', 'erro');
     } finally {
       setCarregando(false);
     }
@@ -74,15 +67,15 @@ export default function RecuperarSenha() {
 
   const redefinir = async () => {
     if (!codigo.trim() || !novaSenha || !confirmar) {
-      showAlert('Atenção', 'Preencha o código e a nova senha.');
+      toast('Preencha o código e a nova senha.', 'erro');
       return;
     }
     if (novaSenha.length < 6) {
-      showAlert('Atenção', 'A senha deve ter pelo menos 6 caracteres.');
+      toast('A senha deve ter pelo menos 6 caracteres.', 'erro');
       return;
     }
     if (novaSenha !== confirmar) {
-      showAlert('Atenção', 'As senhas não conferem.');
+      toast('As senhas não conferem.', 'erro');
       return;
     }
     setCarregando(true);
@@ -92,11 +85,10 @@ export default function RecuperarSenha() {
         codigo: codigo.trim(),
         nova_senha: novaSenha,
       });
-      showAlert('Pronto!', 'Senha alterada. Entre com a nova senha.', () =>
-        router.replace('/login')
-      );
+      toast('Senha alterada. Entre com a nova senha.', 'sucesso');
+      router.replace('/login');
     } catch (erro: any) {
-      showAlert('Não foi possível redefinir', erro.message || 'Erro de conexão.');
+      toast(erro.message || 'Não foi possível redefinir a senha.', 'erro');
     } finally {
       setCarregando(false);
     }

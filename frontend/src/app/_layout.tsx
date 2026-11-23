@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from '../theme';
+import { AvisosProvider } from '../components/ui/Avisos';
 
 // Os títulos ficam aqui (e não dentro de cada tela) para o cabeçalho já nascer com o texto certo.
 function Navegacao() {
@@ -34,7 +35,9 @@ function Navegacao() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <Navegacao />
+      <AvisosProvider>
+        <Navegacao />
+      </AvisosProvider>
     </ThemeProvider>
   );
 }

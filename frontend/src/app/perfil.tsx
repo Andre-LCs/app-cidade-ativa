@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
+import { useAvisos } from '../components/ui/Avisos';
 import { iniciais, useTheme, type Paleta } from '../theme';
 import FundoHorizonte from '../components/ui/FundoHorizonte';
 
@@ -28,6 +29,7 @@ type StatusMessage = {
 export default function Perfil() {
   const { colors: COLORS } = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { toast, confirmar } = useAvisos();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [nomeExibido, setNomeExibido] = useState('');
@@ -136,7 +138,7 @@ export default function Perfil() {
 
       await tokenStorage.deleteItem('token');
       await tokenStorage.deleteItem('usuario');
-      Alert.alert('Conta excluída', 'Seus dados pessoais foram apagados.');
+      toast('Conta excluída. Seus dados pessoais foram apagados.', 'info');
       router.replace('/login');
     } catch (error: any) {
       const semConexao =
@@ -153,7 +155,7 @@ export default function Perfil() {
   };
 
   // Segunda confirmação antes de excluir de fato
-  const handleExcluirConta = () => {
+  const handleExcluirConta = async () => {
     setErroExclusao('');
 
     if (!senhaExclusao) {
@@ -161,14 +163,14 @@ export default function Perfil() {
       return;
     }
 
-    Alert.alert(
-      'Excluir conta?',
-      'Essa ação não pode ser desfeita. Seu nome, e-mail e senha serão apagados.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Excluir', style: 'destructive', onPress: excluirConta },
-      ]
-    );
+    const ok = await confirmar({
+      titulo: 'Excluir conta?',
+      mensagem: 'Essa ação não pode ser desfeita. Seu nome, e-mail e senha serão apagados.',
+      confirmar: 'Excluir minha conta',
+      cancelar: 'Voltar',
+      perigo: true,
+    });
+    if (ok) excluirConta();
   };
 
   if (isLoadingDados) {

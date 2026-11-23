@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -20,41 +19,58 @@ import * as Location from 'expo-location';
 import { apiRequest } from '../services/api';
 import { uploadImagem } from '../services/cloudinary';
 import * as tokenStorage from '../services/tokenStorage';
-import { useTheme, type Paleta } from '../theme';
+import { STATUS, categoriaVisual, paraEscuro, useTheme, type Paleta } from '../theme';
+import { useAvisos } from '../components/ui/Avisos';
 
 
 type Proxima = {
   id: number;
   titulo: string;
+  foto_url: string | null;
+  categoria_nome: string;
+  status: string;
   distancia_m: number;
   minha: boolean;
   meu_voto: string | null;
   confirmacoes: number;
+  limite_validacao?: number;
 };
 
-// Pergunta o que fazer quando já existe uma ocorrência parecida perto do ponto escolhido.
-function perguntarDuplicada(p: Proxima): Promise<'confirmar' | 'registrar' | 'cancelar'> {
-  const onde = p.distancia_m <= 5 ? 'no mesmo local' : `a cerca de ${p.distancia_m} m`;
-  const jaVotou = p.meu_voto === 'AINDA_EXISTE';
-  const podeConfirmar = !p.minha && !jaVotou;
-  const texto = p.minha
-    ? `Você já registrou "${p.titulo}" ${onde}.`
-    : jaVotou
-    ? `Você já confirmou "${p.titulo}", ${onde}.`
-    : `Já existe "${p.titulo}" ${onde}, com ${p.confirmacoes} ${p.confirmacoes === 1 ? 'confirmação' : 'confirmações'}. É o mesmo problema?`;
+// Cartão da ocorrência que já existe, mostrado dentro do aviso de possível duplicada.
+function CartaoSimilar({ p }: { p: Proxima }) {
+  const { colors: C, escuro } = useTheme();
+  const cat = paraEscuro(categoriaVisual(p.categoria_nome), escuro);
+  const st = paraEscuro(STATUS[p.status] ?? { label: p.status, cor: C.textSecondary, fundo: C.inputBackground, icone: 'ellipse-outline' as const }, escuro);
+  const limite = p.limite_validacao ?? 3;
+  const progresso = Math.min(p.confirmacoes, limite) / limite;
+  const miniatura = p.foto_url && p.foto_url.startsWith('https://res.cloudinary.com/')
+    ? p.foto_url.replace('/upload/', '/upload/w_160,h_160,c_fill,q_auto,f_auto/')
+    : p.foto_url;
 
-  if (Platform.OS === 'web') {
-    const ok = window.confirm(`${texto}\n\nOK = registrar mesmo assim · Cancelar = não registrar`);
-    return Promise.resolve(ok ? 'registrar' : 'cancelar');
-  }
-
-  return new Promise((resolve) => {
-    const botoes: any[] = [];
-    if (podeConfirmar) botoes.push({ text: 'É o mesmo: confirmar', onPress: () => resolve('confirmar') });
-    botoes.push({ text: 'É outro: registrar', onPress: () => resolve('registrar') });
-    botoes.push({ text: 'Cancelar', style: 'cancel', onPress: () => resolve('cancelar') });
-    Alert.alert('Ocorrência parecida por perto', texto, botoes, { cancelable: true, onDismiss: () => resolve('cancelar') });
-  });
+  return (
+    <View style={{ flexDirection: 'row', gap: 12, marginTop: 14, padding: 10, borderRadius: 14, backgroundColor: C.inputBackground, borderWidth: 1, borderColor: C.border }}>
+      {miniatura ? (
+        <Image source={{ uri: miniatura }} style={{ width: 64, height: 64, borderRadius: 10 }} resizeMode="cover" />
+      ) : (
+        <View style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: cat.fundo, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name={cat.icone} size={28} color={cat.cor} />
+        </View>
+      )}
+      <View style={{ flex: 1, justifyContent: 'center', gap: 5 }}>
+        <Text style={{ color: C.textPrimary, fontSize: 15, fontWeight: '700' }} numberOfLines={1}>{p.titulo}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: st.fundo, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }}>
+            <Ionicons name={st.icone} size={12} color={st.cor} />
+            <Text style={{ color: st.cor, fontSize: 11, fontWeight: '700' }}>{st.label}</Text>
+          </View>
+          <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: C.border, overflow: 'hidden' }}>
+            <View style={{ width: `${Math.round(progresso * 100)}%`, height: 6, backgroundColor: C.primaryGreen }} />
+          </View>
+          <Text style={{ color: C.textSecondary, fontSize: 11, fontWeight: '700' }}>{Math.min(p.confirmacoes, limite)}/{limite}</Text>
+        </View>
+      </View>
+    </View>
+  );
 }
 
 type Categoria = { id: number; nome: string; descricao: string | null };
@@ -79,6 +95,7 @@ function textoDoErro(error: any) {
 export default function NovaOcorrencia() {
   const { colors: COLORS, escuro } = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { folha } = useAvisos();
   const isWeb = Platform.OS === 'web';
 
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -229,10 +246,36 @@ export default function NovaOcorrencia() {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (proximas.length > 0) {
-          const escolha = await perguntarDuplicada(proximas[0]);
+          // prefere uma ocorrência de outra pessoa que ainda dê para confirmar; senão, a mais próxima
+          const alvo = proximas.find((p) => !p.minha && p.meu_voto !== 'AINDA_EXISTE') ?? proximas[0];
+          const onde = alvo.distancia_m <= 5 ? 'no mesmo local' : `a cerca de ${alvo.distancia_m} m daqui`;
+          const jaVotou = alvo.meu_voto === 'AINDA_EXISTE';
+          const podeConfirmar = !alvo.minha && !jaVotou;
+          const r = await folha({
+            titulo: alvo.minha
+              ? 'Você já registrou algo parecido'
+              : jaVotou
+              ? 'Você já confirmou esta ocorrência'
+              : 'Já existe uma ocorrência parecida',
+            mensagem: podeConfirmar
+              ? `Ela está ${onde}. É o mesmo problema?`
+              : `Ela está ${onde}. Quer registrar outra mesmo assim?`,
+            conteudo: <CartaoSimilar p={alvo} />,
+            acoes: podeConfirmar
+              ? [
+                  { id: 'confirmar', rotulo: 'É o mesmo: confirmar', tipo: 'primario' },
+                  { id: 'registrar', rotulo: 'É outro problema: registrar', tipo: 'secundario' },
+                  { id: 'cancelar', rotulo: 'Voltar', tipo: 'neutro' },
+                ]
+              : [
+                  { id: 'registrar', rotulo: 'Registrar outra mesmo assim', tipo: 'primario' },
+                  { id: 'cancelar', rotulo: 'Voltar', tipo: 'neutro' },
+                ],
+          });
+          const escolha = r ?? 'cancelar';
           if (escolha === 'cancelar') return;
           if (escolha === 'confirmar') {
-            await apiRequest(`/ocorrencias/${proximas[0].id}/confirmacoes`, {
+            await apiRequest(`/ocorrencias/${alvo.id}/confirmacoes`, {
               method: 'POST',
               headers: { Authorization: `Bearer ${token}` },
               body: JSON.stringify({ tipo: 'AINDA_EXISTE' }),

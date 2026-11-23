@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { apiRequest } from '../services/api';
 import * as tokenStorage from '../services/tokenStorage';
 import { useAtualizacaoAutomatica } from '../services/atualizacaoAutomatica';
+import { useAvisos } from '../components/ui/Avisos';
 import { STATUS, categoriaVisual, paraEscuro, primeiroNome, useTheme, type Paleta } from '../theme';
 import BotaoTema from '../components/ui/BotaoTema';
 import FundoHorizonte from '../components/ui/FundoHorizonte';
@@ -50,6 +51,7 @@ function formatarData(iso: string) {
 export default function MinhasOcorrencias() {
   const { colors: COLORS, escuro } = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const { toast, confirmar } = useAvisos();
   const insets = useSafeAreaInsets();
   const [itens, setItens] = useState<Ocorrencia[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -125,24 +127,22 @@ export default function MinhasOcorrencias() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setItens((atual) => atual.filter((o) => o.id !== item.id));
+      toast('Ocorrência cancelada.', 'info');
     } catch (error: any) {
       setErro(error.message || 'Não foi possível cancelar a ocorrência.');
       carregar();
     }
   };
 
-  const confirmarCancelamento = (item: Ocorrencia) => {
-    const mensagem = 'A ocorrência deixará de aparecer na lista e no mapa. Esta ação não pode ser desfeita.';
-
-    if (Platform.OS === 'web') {
-      if (window.confirm(`Cancelar esta ocorrência?\n\n${mensagem}`)) cancelar(item);
-      return;
-    }
-
-    Alert.alert('Cancelar esta ocorrência?', mensagem, [
-      { text: 'Voltar', style: 'cancel' },
-      { text: 'Cancelar ocorrência', style: 'destructive', onPress: () => cancelar(item) },
-    ]);
+  const confirmarCancelamento = async (item: Ocorrencia) => {
+    const ok = await confirmar({
+      titulo: 'Cancelar esta ocorrência?',
+      mensagem: 'Ela deixará de aparecer na lista e no mapa. Esta ação não pode ser desfeita.',
+      confirmar: 'Cancelar ocorrência',
+      cancelar: 'Voltar',
+      perigo: true,
+    });
+    if (ok) cancelar(item);
   };
 
   const renderItem = ({ item }: { item: Ocorrencia }) => {

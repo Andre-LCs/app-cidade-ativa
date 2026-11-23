@@ -161,7 +161,7 @@ router.get('/proximas', autenticar, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT o.id, o.titulo, c.nome AS categoria_nome, o.status,
+      `SELECT o.id, o.titulo, o.foto_url, c.nome AS categoria_nome, o.status,
               (o.usuario_id = $1) AS minha,
               ROUND(ST_Distance(o.localizacao,
                     ST_SetSRID(ST_MakePoint($4::double precision, $3::double precision), 4326)::geography))::int
@@ -181,7 +181,9 @@ router.get('/proximas', autenticar, async (req, res) => {
       [req.usuarioId, categoriaId, lat, lon, RAIO_DUPLICADA_M]
     );
 
-    return res.status(200).json(result.rows);
+    return res.status(200).json(
+      result.rows.map((linha) => ({ ...linha, limite_validacao: LIMITE_VALIDACAO }))
+    );
   } catch (erro) {
     console.error(erro);
     return res.status(500).json({ erro: 'erro interno do servidor' });
