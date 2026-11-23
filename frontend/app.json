@@ -30,8 +30,8 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#1F3F77",
+          "image": "./assets/images/splash-cidade-ativa.png",
           "imageWidth": 200
         }
       ],

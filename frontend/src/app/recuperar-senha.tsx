@@ -13,14 +13,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { API_URL } from '../services/api';
+import { API_URL, fetchApi } from '../services/api';
 import { useAvisos } from '../components/ui/Avisos';
 import { useTheme, type Paleta } from '../theme';
 import FundoHorizonte from '../components/ui/FundoHorizonte';
 
 
 async function chamarApi(endpoint: string, corpo: object) {
-  const resposta = await fetch(`${API_URL}${endpoint}`, {
+  const resposta = await fetchApi(`${API_URL}${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(corpo),

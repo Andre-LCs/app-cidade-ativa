@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as tokenStorage from '../services/tokenStorage';
-import { API_URL } from '../services/api';
+import { API_URL, fetchApi } from '../services/api';
 import BotaoTema from '../components/ui/BotaoTema';
 import { useAvisos } from '../components/ui/Avisos';
 import { useTheme, type Paleta } from '../theme';
@@ -51,7 +51,7 @@ export default function Login() {
       // No celular (Expo Go), use o IP da máquina na rede local.
       const apiUrl = `${API_URL}/login`;
 
-      const response = await fetch(apiUrl, {
+      const response = await fetchApi(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

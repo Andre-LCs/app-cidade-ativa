@@ -3,6 +3,7 @@ import { Animated, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } 
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, type Paleta } from '../../theme';
+import { ouvirDemora } from '../../services/api';
 
 // Sistema de avisos do app, no lugar das caixas do sistema (Alert):
 // - toast: mensagem curta que some sozinha (não pede toque);
@@ -69,6 +70,18 @@ export function AvisosProvider({ children }: { children: React.ReactNode }) {
     });
     return () => anim.stop();
   }, [toastAtual, opacidade]);
+
+  // servidor demorando para responder (acordando): avisa uma vez por espera
+  const ultimoAvisoDemora = useRef(0);
+  useEffect(() => {
+    ouvirDemora(() => {
+      const agora = Date.now();
+      if (agora - ultimoAvisoDemora.current < 20000) return;
+      ultimoAvisoDemora.current = agora;
+      toast('Acordando o servidor, só um instante…', 'info');
+    });
+    return () => ouvirDemora(null);
+  }, [toast]);
 
   // ---- folha
   const [pedido, setPedido] = useState<PedidoFolha | null>(null);
