@@ -541,7 +541,7 @@ export default function Mapa() {
 
       {carregando ? (
         <View style={styles.centro}>
-          <ActivityIndicator size="large" color={COLORS.primaryBlue} />
+          <ActivityIndicator size="large" color={COLORS.textAccent} />
         </View>
       ) : Platform.OS === 'web' ? (
         React.createElement('iframe', {
@@ -581,5 +581,5 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     padding: 12,
   },
   bannerTexto: { flex: 1, color: COLORS.error, fontSize: 13 },
-  link: { color: COLORS.primaryBlue, fontWeight: '700', fontSize: 13 },
+  link: { color: COLORS.textAccent, fontWeight: '700', fontSize: 13 },
 });

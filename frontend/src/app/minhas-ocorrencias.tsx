@@ -192,7 +192,7 @@ export default function MinhasOcorrencias() {
               </View>
             )}
             {resolvida ? (
-              <Ionicons name="checkmark-circle" size={18} color={COLORS.primaryGreen} />
+              <Ionicons name="checkmark-circle" size={18} color={COLORS.textGreen} />
             ) : emValidacao ? (
               <Text style={styles.progressoTexto}>{Math.min(confirmacoes, limite)}/{limite}</Text>
             ) : null}
@@ -282,7 +282,7 @@ export default function MinhasOcorrencias() {
 
       {carregando ? (
         <View style={styles.centro}>
-          <ActivityIndicator size="large" color={COLORS.primaryBlue} />
+          <ActivityIndicator size="large" color={COLORS.textAccent} />
         </View>
       ) : (
         <FlatList

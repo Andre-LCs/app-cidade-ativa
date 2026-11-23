@@ -232,7 +232,7 @@ export default function RecuperarSenha() {
 
 const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  scroll: { flexGrow: 1, justifyContent: 'flex-start', padding: 24, paddingTop: 36 },
   card: {
     backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
@@ -245,7 +245,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.borderCard,
   },
-  title: { fontSize: 22, fontWeight: '800', color: COLORS.primaryBlue, marginBottom: 4 },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.textAccent, marginBottom: 4 },
   subtitle: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 4, marginTop: 6 },
   inputWrapper: {
@@ -271,6 +271,6 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   },
   buttonText: { color: COLORS.white, fontSize: 15, fontWeight: '700' },
   link: { alignSelf: 'center', marginTop: 14 },
-  linkText: { color: COLORS.primaryGreen, fontSize: 13, fontWeight: '700' },
+  linkText: { color: COLORS.textGreen, fontSize: 13, fontWeight: '700' },
   voltar: { alignSelf: 'center', marginTop: 18 },
 });

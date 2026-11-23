@@ -12,6 +12,8 @@ export const LIGHT = {
   primaryBlueLight: '#2A5298',
   primaryGreen: '#1F7A33', // verde de ação e de texto (contraste adequado sobre branco)
   logoGreen: '#32A041', // verde da logo, só para preenchimentos grandes
+  textAccent: '#1F3F77', // azul para títulos e links sobre superfícies
+  textGreen: '#1F7A33', // verde para links e textos de ação
 
   // superfícies
   background: '#F3F6FB',
@@ -40,11 +42,13 @@ export const LIGHT = {
 export type Paleta = typeof LIGHT;
 
 export const DARK: Paleta = {
-  primaryBlue: '#2F5DAF',
-  primaryBlueDark: '#1F3F77',
+  primaryBlue: '#254B8F',
+  primaryBlueDark: '#1B3A6E',
   primaryBlueLight: '#4A78CC',
   primaryGreen: '#25883A',
   logoGreen: '#32A041',
+  textAccent: '#8DB4F2',
+  textGreen: '#4CC26A',
 
   background: '#0B1220',
   cardBackground: '#131C2E',

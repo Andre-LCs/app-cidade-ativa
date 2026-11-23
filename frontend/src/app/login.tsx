@@ -216,7 +216,7 @@ export default function Login() {
             activeOpacity={0.7}
             onPress={() => router.push('/mapa?visitante=1')}
           >
-            <Ionicons name="map-outline" size={18} color={COLORS.primaryBlue} />
+            <Ionicons name="map-outline" size={18} color={COLORS.textAccent} />
             <Text style={styles.explorarTexto}>Explorar o mapa sem conta</Text>
           </TouchableOpacity>
         </View>
@@ -230,7 +230,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   scroll: { flexGrow: 1 },
   botaoTema: { position: 'absolute', right: 16, zIndex: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.onBlueTint, alignItems: 'center', justifyContent: 'center' },
   explorar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 18, paddingVertical: 8 },
-  explorarTexto: { color: COLORS.primaryBlue, fontSize: 14, fontWeight: '700' },
+  explorarTexto: { color: COLORS.textAccent, fontSize: 14, fontWeight: '700' },
   hero: {
     backgroundColor: COLORS.primaryBlue,
     alignItems: 'center',
@@ -303,7 +303,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   input: { flex: 1, color: COLORS.textPrimary, fontSize: 14, height: '100%' },
   eyeIcon: { padding: 6 },
   forgotPasswordButton: { alignSelf: 'flex-end', marginBottom: 18, paddingVertical: 4 },
-  forgotPasswordText: { color: COLORS.primaryBlue, fontSize: 13, fontWeight: '700' },
+  forgotPasswordText: { color: COLORS.textAccent, fontSize: 13, fontWeight: '700' },
   loginButton: {
     backgroundColor: COLORS.primaryBlue,
     borderRadius: 14,
@@ -327,5 +327,5 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  registerButtonText: { color: COLORS.primaryGreen, fontSize: 16, fontWeight: '700' },
+  registerButtonText: { color: COLORS.textGreen, fontSize: 16, fontWeight: '700' },
 });

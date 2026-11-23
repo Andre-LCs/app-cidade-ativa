@@ -278,7 +278,7 @@ export default function NovaOcorrencia() {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Categoria</Text>
             {carregandoCategorias ? (
-              <ActivityIndicator color={COLORS.primaryBlue} style={{ alignSelf: 'flex-start' }} />
+              <ActivityIndicator color={COLORS.textAccent} style={{ alignSelf: 'flex-start' }} />
             ) : (
               <View style={styles.chips}>
                 {categorias.map((c) => {
@@ -348,12 +348,12 @@ export default function NovaOcorrencia() {
                 <View style={[styles.fotoBotoes, { marginTop: 10 }]}>
                   {!isWeb && (
                     <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={tirarFoto}>
-                      <Ionicons name="camera-outline" size={18} color={COLORS.primaryBlue} />
+                      <Ionicons name="camera-outline" size={18} color={COLORS.textAccent} />
                       <Text style={styles.botaoSecundarioTexto}>Tirar outra</Text>
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={escolherDaGaleria}>
-                    <Ionicons name="swap-horizontal-outline" size={18} color={COLORS.primaryBlue} />
+                    <Ionicons name="swap-horizontal-outline" size={18} color={COLORS.textAccent} />
                     <Text style={styles.botaoSecundarioTexto}>{isWeb ? 'Trocar foto' : 'Trocar da galeria'}</Text>
                   </TouchableOpacity>
                 </View>
@@ -366,12 +366,12 @@ export default function NovaOcorrencia() {
               <View style={styles.fotoBotoes}>
                 {!isWeb && (
                   <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={tirarFoto}>
-                    <Ionicons name="camera-outline" size={18} color={COLORS.primaryBlue} />
+                    <Ionicons name="camera-outline" size={18} color={COLORS.textAccent} />
                     <Text style={styles.botaoSecundarioTexto}>Tirar foto</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity style={styles.botaoSecundario} activeOpacity={0.8} onPress={escolherDaGaleria}>
-                  <Ionicons name="images-outline" size={18} color={COLORS.primaryBlue} />
+                  <Ionicons name="images-outline" size={18} color={COLORS.textAccent} />
                   <Text style={styles.botaoSecundarioTexto}>{isWeb ? 'Escolher foto' : 'Galeria'}</Text>
                 </TouchableOpacity>
               </View>
@@ -466,7 +466,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     elevation: 3,
   },
   headerContainer: { marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '800', color: COLORS.primaryBlue, marginBottom: 2 },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.textAccent, marginBottom: 2 },
   subtitle: { fontSize: 13, color: COLORS.textSecondary },
   statusBanner: {
     flexDirection: 'row',
@@ -480,7 +480,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   statusBannerSuccess: { backgroundColor: COLORS.successBackground, borderColor: COLORS.successBorder },
   statusBannerError: { backgroundColor: COLORS.errorBackground, borderColor: COLORS.errorBorder },
   statusBannerText: { marginLeft: 8, fontSize: 13, fontWeight: '600', flexShrink: 1 },
-  statusTextSuccess: { color: COLORS.primaryGreen },
+  statusTextSuccess: { color: COLORS.textGreen },
   statusTextError: { color: COLORS.error },
   inputGroup: { marginBottom: 14 },
   label: { fontSize: 12, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6 },
@@ -524,7 +524,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     borderColor: COLORS.primaryBlue,
     backgroundColor: COLORS.cardBackground,
   },
-  botaoSecundarioTexto: { color: COLORS.primaryBlue, fontSize: 14, fontWeight: '700' },
+  botaoSecundarioTexto: { color: COLORS.textAccent, fontSize: 14, fontWeight: '700' },
   preview: { width: '100%', height: 200, borderRadius: 10, backgroundColor: COLORS.inputBackground },
   avisoLocal: { fontSize: 12, lineHeight: 17, color: COLORS.textSecondary, marginTop: 8 },
   removerFoto: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 8 },
@@ -555,7 +555,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     fontSize: 14,
     color: COLORS.textPrimary,
   },
-  linkTexto: { color: COLORS.primaryGreen, fontSize: 13, fontWeight: '700' },
+  linkTexto: { color: COLORS.textGreen, fontSize: 13, fontWeight: '700' },
   primaryButton: {
     backgroundColor: COLORS.primaryBlue,
     borderRadius: 10,

@@ -174,7 +174,7 @@ export default function Perfil() {
   if (isLoadingDados) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primaryBlue} />
+        <ActivityIndicator size="large" color={COLORS.textAccent} />
       </View>
     );
   }
@@ -373,7 +373,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarIniciais: { fontSize: 28, fontWeight: '800', color: COLORS.primaryBlue },
+  avatarIniciais: { fontSize: 28, fontWeight: '800', color: COLORS.textAccent },
   faixa: {
     backgroundColor: COLORS.primaryBlue,
     alignItems: 'center',
@@ -401,7 +401,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     elevation: 3,
   },
   headerContainer: { marginBottom: 16, alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '800', color: COLORS.primaryBlue, marginBottom: 2 },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.textAccent, marginBottom: 2 },
   subtitle: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '400' },
   statusBanner: {
     flexDirection: 'row',
@@ -415,7 +415,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   statusBannerSuccess: { backgroundColor: COLORS.successBackground, borderColor: COLORS.successBorder },
   statusBannerError: { backgroundColor: COLORS.errorBackground, borderColor: COLORS.errorBorder },
   statusBannerText: { marginLeft: 8, fontSize: 13, fontWeight: '600', flexShrink: 1 },
-  statusBannerTextSuccess: { color: COLORS.primaryGreen },
+  statusBannerTextSuccess: { color: COLORS.textGreen },
   statusBannerTextError: { color: COLORS.error },
   inputGroup: { marginBottom: 12 },
   label: { fontSize: 12, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 4 },

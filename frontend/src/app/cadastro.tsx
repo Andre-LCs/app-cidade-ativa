@@ -323,7 +323,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: COLORS.primaryBlue,
+    color: COLORS.textAccent,
     marginBottom: 2,
   },
   subtitle: {
@@ -355,7 +355,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     flexShrink: 1,
   },
   statusBannerTextSuccess: {
-    color: COLORS.primaryGreen,
+    color: COLORS.textGreen,
   },
   statusBannerTextError: {
     color: COLORS.error,
@@ -425,7 +425,7 @@ const makeStyles = (COLORS: Paleta) => StyleSheet.create({
     marginRight: 6,
   },
   linkText: {
-    color: COLORS.primaryGreen,
+    color: COLORS.textGreen,
     fontSize: 13,
     fontWeight: '700',
   },
