@@ -38,6 +38,8 @@ export default function RecuperarSenha() {
   const { toast, aviso } = useAvisos();
   // etapa 1: pedir o código por e-mail; etapa 2: informar o código e a nova senha
   const [etapa, setEtapa] = useState<1 | 2>(1);
+  // quem chega na etapa 2 por "Já tenho um código" sem ter digitado o e-mail precisa informá-lo ali
+  const [pedirEmail, setPedirEmail] = useState(false);
   const [email, setEmail] = useState('');
   const [codigo, setCodigo] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
@@ -66,8 +68,8 @@ export default function RecuperarSenha() {
   };
 
   const redefinir = async () => {
-    if (!codigo.trim() || !novaSenha || !confirmar) {
-      toast('Preencha o código e a nova senha.', 'erro');
+    if (!email.trim() || !codigo.trim() || !novaSenha || !confirmar) {
+      toast('Preencha e-mail, código e nova senha.', 'erro');
       return;
     }
     if (novaSenha.length < 6) {
@@ -108,7 +110,9 @@ export default function RecuperarSenha() {
           <Text style={styles.subtitle}>
             {etapa === 1
               ? 'Informe o e-mail da sua conta e enviaremos um código de 6 dígitos.'
-              : `Digite o código enviado para ${email.trim()} e escolha a nova senha.`}
+              : email.trim() && !pedirEmail
+              ? `Digite o código enviado para ${email.trim()} e escolha a nova senha.`
+              : 'Informe o e-mail da sua conta, o código recebido e escolha a nova senha.'}
           </Text>
 
           {etapa === 1 ? (
@@ -141,12 +145,30 @@ export default function RecuperarSenha() {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.link} onPress={() => setEtapa(2)} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.link} onPress={() => { setPedirEmail(!email.trim()); setEtapa(2); }} activeOpacity={0.7}>
                 <Text style={styles.linkText}>Já tenho um código</Text>
               </TouchableOpacity>
             </>
           ) : (
             <>
+              {pedirEmail && (
+                <>
+                  <Text style={styles.label}>E-mail</Text>
+                  <View style={styles.inputWrapper}>
+                    <Ionicons name="mail-outline" size={18} color={COLORS.textSecondary} style={styles.icon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="exemplo@email.com"
+                      placeholderTextColor={COLORS.placeholder}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      value={email}
+                      onChangeText={setEmail}
+                    />
+                  </View>
+                </>
+              )}
               <Text style={styles.label}>Código de 6 dígitos</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="keypad-outline" size={18} color={COLORS.textSecondary} style={styles.icon} />
