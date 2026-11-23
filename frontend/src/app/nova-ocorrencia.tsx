@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +22,40 @@ import { uploadImagem } from '../services/cloudinary';
 import * as tokenStorage from '../services/tokenStorage';
 import { useTheme, type Paleta } from '../theme';
 
+
+type Proxima = {
+  id: number;
+  titulo: string;
+  distancia_m: number;
+  minha: boolean;
+  meu_voto: string | null;
+  confirmacoes: number;
+};
+
+// Pergunta o que fazer quando já existe uma ocorrência parecida perto do ponto escolhido.
+function perguntarDuplicada(p: Proxima): Promise<'confirmar' | 'registrar' | 'cancelar'> {
+  const onde = p.distancia_m <= 5 ? 'no mesmo local' : `a cerca de ${p.distancia_m} m`;
+  const jaVotou = p.meu_voto === 'AINDA_EXISTE';
+  const podeConfirmar = !p.minha && !jaVotou;
+  const texto = p.minha
+    ? `Você já registrou "${p.titulo}" ${onde}.`
+    : jaVotou
+    ? `Você já confirmou "${p.titulo}", ${onde}.`
+    : `Já existe "${p.titulo}" ${onde}, com ${p.confirmacoes} ${p.confirmacoes === 1 ? 'confirmação' : 'confirmações'}. É o mesmo problema?`;
+
+  if (Platform.OS === 'web') {
+    const ok = window.confirm(`${texto}\n\nOK = registrar mesmo assim · Cancelar = não registrar`);
+    return Promise.resolve(ok ? 'registrar' : 'cancelar');
+  }
+
+  return new Promise((resolve) => {
+    const botoes: any[] = [];
+    if (podeConfirmar) botoes.push({ text: 'É o mesmo: confirmar', onPress: () => resolve('confirmar') });
+    botoes.push({ text: 'É outro: registrar', onPress: () => resolve('registrar') });
+    botoes.push({ text: 'Cancelar', style: 'cancel', onPress: () => resolve('cancelar') });
+    Alert.alert('Ocorrência parecida por perto', texto, botoes, { cancelable: true, onDismiss: () => resolve('cancelar') });
+  });
+}
 
 type Categoria = { id: number; nome: string; descricao: string | null };
 type Coords = { latitude: number; longitude: number };
@@ -187,6 +222,32 @@ export default function NovaOcorrencia() {
     setEnviando(true);
 
     try {
+      // antes de enviar foto/registro: já existe uma ocorrência igual por perto?
+      try {
+        const proximas: Proxima[] = await apiRequest(
+          `/ocorrencias/proximas?categoria_id=${categoriaId}&latitude=${local.latitude}&longitude=${local.longitude}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (proximas.length > 0) {
+          const escolha = await perguntarDuplicada(proximas[0]);
+          if (escolha === 'cancelar') return;
+          if (escolha === 'confirmar') {
+            await apiRequest(`/ocorrencias/${proximas[0].id}/confirmacoes`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ tipo: 'AINDA_EXISTE' }),
+            });
+            setConcluido(true);
+            setStatusMessage({ tipo: 'sucesso', texto: 'Você confirmou a ocorrência que já existia. Obrigado!' });
+            setTimeout(() => router.replace('/minhas-ocorrencias'), 1500);
+            return;
+          }
+        }
+      } catch (erroBusca: any) {
+        if (erroBusca?.message === 'não autorizado') throw erroBusca;
+        // sem resposta da verificação: segue com o registro normal
+      }
+
       let fotoUrl: string | undefined;
 
       if (fotoUri) {

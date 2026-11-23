@@ -7,6 +7,7 @@ const router = express.Router();
 // Regras da validação pela comunidade (versão de teste). Ajuste aqui para mudar o rigor.
 const LIMITE_VALIDACAO = 3; // confirmações "ainda está lá" para a ocorrência ficar VALIDADA
 const LIMITE_RESOLVIDA = 2; // votos "já foi resolvido" para a ocorrência ficar RESOLVIDA
+const RAIO_DUPLICADA_M = 50; // distância (m) para considerar que já existe uma ocorrência parecida
 
 // Converte número ou texto numérico em número; qualquer outra coisa vira NaN.
 function paraNumero(valor) {
@@ -139,6 +140,51 @@ router.get('/versao', async (req, res) => {
     return res.status(500).json({
       erro: 'erro interno do servidor'
     });
+  }
+});
+
+// GET /ocorrencias/proximas?categoria_id=&latitude=&longitude=
+// Antes de registrar, o app pergunta se já existe uma ocorrência em andamento da mesma
+// categoria a poucos metros dali (possível duplicada). Devolve até 3, da mais próxima.
+router.get('/proximas', autenticar, async (req, res) => {
+  const categoriaId = paraNumero(req.query.categoria_id);
+  const lat = paraNumero(req.query.latitude);
+  const lon = paraNumero(req.query.longitude);
+
+  if (
+    !Number.isSafeInteger(categoriaId) || categoriaId <= 0 ||
+    !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+    !Number.isFinite(lon) || lon < -180 || lon > 180
+  ) {
+    return res.status(400).json({ erro: 'categoria_id, latitude e longitude são obrigatórios' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT o.id, o.titulo, c.nome AS categoria_nome, o.status,
+              (o.usuario_id = $1) AS minha,
+              ROUND(ST_Distance(o.localizacao,
+                    ST_SetSRID(ST_MakePoint($4::double precision, $3::double precision), 4326)::geography))::int
+                AS distancia_m,
+              (SELECT COUNT(*)::int FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.tipo = 'AINDA_EXISTE') AS confirmacoes,
+              (SELECT f.tipo FROM confirmacoes f
+                WHERE f.ocorrencia_id = o.id AND f.usuario_id = $1) AS meu_voto
+         FROM ocorrencias o
+         JOIN categorias c ON c.id = o.categoria_id
+        WHERE o.categoria_id = $2
+          AND o.status IN ('ABERTA', 'EM_VALIDACAO', 'VALIDADA', 'ENVIADA_PREFEITURA', 'EM_ATENDIMENTO')
+          AND ST_DWithin(o.localizacao,
+                ST_SetSRID(ST_MakePoint($4::double precision, $3::double precision), 4326)::geography, $5)
+        ORDER BY distancia_m ASC, o.id ASC
+        LIMIT 3`,
+      [req.usuarioId, categoriaId, lat, lon, RAIO_DUPLICADA_M]
+    );
+
+    return res.status(200).json(result.rows);
+  } catch (erro) {
+    console.error(erro);
+    return res.status(500).json({ erro: 'erro interno do servidor' });
   }
 });
 

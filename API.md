@@ -281,6 +281,14 @@ Authorization: Bearer <token>
 
 ---
 
+## GET /ocorrencias/proximas
+
+Requer token. Parâmetros: `categoria_id`, `latitude`, `longitude`. Devolve até 3 ocorrências **em andamento**
+(abertas, em validação, validadas, enviadas ou em atendimento) da **mesma categoria** a até 50 m do ponto,
+da mais próxima para a mais distante, com `id`, `titulo`, `categoria_nome`, `status`, `minha`, `distancia_m`,
+`confirmacoes` e `meu_voto`. O app usa isso antes de registrar para avisar sobre uma possível duplicada
+e oferecer "confirmar a existente" no lugar de criar outra.
+
 ## GET /ocorrencias/publicas
 
 Listagem **sem autenticação**, usada pelo modo "explorar o mapa sem conta" (somente leitura).
